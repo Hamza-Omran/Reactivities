@@ -11,9 +11,19 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+// now we gonna add the websites that can actually access our APIs
+// and as this adds header to our https response we need to add a middleware for it
+builder.Services.AddCors();
+
+
 var app = builder.Build();
 
+// when we add a middleware it is important to take care about the order since it is fussy about the ordering
 // Configure the HTTP request pipeline.
+
+app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod()
+    .WithOrigins("http://localhost:3000", "https://localhost:3000")); // note adding the slash here will make it still saying cors problem
+
 app.MapControllers();
 
 // we can't use the services we initialized here so we gonna use something called service locator pattern
