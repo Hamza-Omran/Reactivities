@@ -1,3 +1,5 @@
+using Application.Activities.Queries;
+using Application.Core;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 
@@ -13,7 +15,12 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 
 // now we gonna add the websites that can actually access our APIs
 // and as this adds header to our https response we need to add a middleware for it
+// the order doesn't matter in services
 builder.Services.AddCors();
+builder.Services.AddMediatR(x => 
+    x.RegisterServicesFromAssemblyContaining<GetActivityList.Handler>()); // as we choose this (RegisterServicesFromAssemblyContaining) here we can add one handler and the others will be automatically registered
+// we used this way of overload as the package is updated than neil cummings!    
+builder.Services.AddAutoMapper(cfg => {}, typeof(MappingProfiles).Assembly); // the automapper needs to know where is the assembly is to register the mapping profiles with our application => the assembly is the .dll file
 
 
 var app = builder.Build();
