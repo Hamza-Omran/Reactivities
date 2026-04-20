@@ -1,1 +1,8 @@
-{}
+{
+  "editor.inlineSuggest.enabled": false,
+
+  "js/ts.suggest.autoImports": true,
+  "js/ts.preferences.includePackageJsonAutoImports": "on",
+
+  "js/ts.tsserver.maxMemory": 4096
+}
