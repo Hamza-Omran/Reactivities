@@ -1,15 +1,18 @@
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import type { FormEvent } from "react";
+import { useActivities } from "../../../lib/hooks/useActivities";
 
 type Props = {
   closeForm: () => void,
   activity?: Activity,
-  handleSubmitForm : (activity:Activity) => void
 }
 
-export default function ActivityForm({closeForm, activity, handleSubmitForm} : Props) {
+export default function ActivityForm({closeForm, activity} : Props) {
   
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const {updateActivity, createActivity} = useActivities();
+
+  //  so in order to make sure the update is happening even after closing the form we need to use async
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     
     event.preventDefault();
     
@@ -21,10 +24,15 @@ export default function ActivityForm({closeForm, activity, handleSubmitForm} : P
       data[key] = value;
     });
     
-    if(activity) data.id = activity.id;
-    
-    handleSubmitForm(data as unknown as Activity); // this is just to cast it in Js
-
+    if(activity) {
+      data.id = activity.id;
+      await updateActivity.mutateAsync(data as unknown as Activity);  // this is just to cast it in Js
+      closeForm()
+    }
+    else{
+      await createActivity.mutateAsync(data as unknown as Activity)
+      closeForm()
+    }
   }
   
   return (
@@ -42,12 +50,17 @@ export default function ActivityForm({closeForm, activity, handleSubmitForm} : P
         {/* if we specified a property like multiline then it is true by default so no need to assignment */}
         <TextField name="description" label="Description" multiline rows={3} defaultValue={activity?.description}/>
         <TextField name="category" label="Category" defaultValue={activity?.category}/>
-        <TextField name="date" label="Date" type="date" defaultValue={activity?.date}/>
+        <TextField name="date" label="Date" type="date" defaultValue={activity?.date ?
+          new Date(activity.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] 
+        }/>
         <TextField name="city" label="City" defaultValue={activity?.city}/>
         <TextField name="venue" label="Venue" defaultValue={activity?.venue}/>
         <Box style={{display: "flex", justifyContent: "end", gap: 10}}>
           <Button onClick={closeForm} color="inherit">Cancel</Button>
-          <Button type="submit" color="success" variant="contained">Submit</Button>
+          <Button 
+          type="submit" color="success" variant="contained"
+          loading={updateActivity.isPending || createActivity.isPending}
+          >Submit</Button>
         </Box>
       </Box>
     </Paper>

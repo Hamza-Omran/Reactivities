@@ -1,14 +1,17 @@
 import { Box, Button, Card, CardActions, CardContent, Chip, Typography } from "@mui/material"
+import { useActivities } from "../../../lib/hooks/useActivities"
 
 type Props = {
     activity: Activity,
     selectActivity: (id : string) => void
-    handleDelete: (id: string) => void
 }
 
 // now prop drilling is happening because we don't have route nor global state management
 
-export default function ActivityCard({activity, selectActivity, handleDelete}: Props) {
+export default function ActivityCard({activity, selectActivity}: Props) {
+  
+  const {deleteActivity} = useActivities();
+
   return (
     <Card sx={{borderRadius: 3}}>
       <CardContent>
@@ -21,7 +24,9 @@ export default function ActivityCard({activity, selectActivity, handleDelete}: P
         <Chip label={activity.category} variant="outlined"/>
         <Box style={{display: "flex", gap: 10}}>
           <Button onClick={() => {selectActivity(activity.id)}} size="medium" variant="contained">View</Button>
-          <Button onClick={() => {handleDelete(activity.id)}} size="medium" color="error" variant="contained">Delete</Button>
+          <Button onClick={() => {deleteActivity.mutate(activity.id)}} size="medium" color="error" variant="contained"
+            loading={deleteActivity.isPending}
+            >Delete</Button>
         </Box>
       </CardActions>
     </Card>
