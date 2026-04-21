@@ -1,15 +1,18 @@
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import type { FormEvent } from "react";
 import { useActivities } from "../../../lib/hooks/useActivities";
+import { Link, useNavigate, useParams } from "react-router";
 
-type Props = {
-  closeForm: () => void,
-  activity?: Activity,
-}
+// type Props = {
+//   closeForm: () => void,
+//   activity?: Activity,
+// }
 
-export default function ActivityForm({closeForm, activity} : Props) {
+export default function ActivityForm() {
   
-  const {updateActivity, createActivity} = useActivities();
+  const {id} = useParams();
+  const {updateActivity, createActivity, activity, isLoadingActivity} = useActivities(id);
+  const navigate = useNavigate();
 
   //  so in order to make sure the update is happening even after closing the form we need to use async
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -27,20 +30,25 @@ export default function ActivityForm({closeForm, activity} : Props) {
     if(activity) {
       data.id = activity.id;
       await updateActivity.mutateAsync(data as unknown as Activity);  // this is just to cast it in Js
-      closeForm()
+      navigate(`/activities/${activity.id}`)
     }
     else{
-      await createActivity.mutateAsync(data as unknown as Activity)
-      closeForm()
+      createActivity.mutate(data as unknown as Activity, {
+        onSuccess: (id) => {
+          navigate(`/activities/${id}`);
+        }
+      })
     }
   }
   
+  if(isLoadingActivity) return <Typography>Loading Activity...</Typography>
+
   return (
     // for making the background white
     <Paper sx={{borderRadius: 3, padding: 3}}>
       {/* gutterBottom for margin at the bottom */}
       <Typography variant="h5" gutterBottom color="primary">
-        Create Activity
+        {activity ? 'Edit Activity' : 'Create Activity'}
       </Typography>
       <Box component='form' onSubmit={handleSubmit} style={{display: "flex", flexDirection: "column", gap: 25}}>
         {/* when we are using the value here it is like we are saying this is a controlled input => so we can't edit it if filled
@@ -56,7 +64,7 @@ export default function ActivityForm({closeForm, activity} : Props) {
         <TextField name="city" label="City" defaultValue={activity?.city}/>
         <TextField name="venue" label="Venue" defaultValue={activity?.venue}/>
         <Box style={{display: "flex", justifyContent: "end", gap: 10}}>
-          <Button onClick={closeForm} color="inherit">Cancel</Button>
+          <Button component={Link} to={`/activities/${activity?.id}`} color="inherit">Cancel</Button>
           <Button 
           type="submit" color="success" variant="contained"
           loading={updateActivity.isPending || createActivity.isPending}
