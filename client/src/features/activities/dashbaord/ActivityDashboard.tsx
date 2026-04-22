@@ -1,5 +1,6 @@
 import { Grid } from '@mui/material';
 import ActivityList from './ActivityList';
+import ActivityFilters from './ActivityFilters';
 
 // type Props = {
 //   activities: Activity[],
@@ -23,17 +24,17 @@ export default function ActivityDashboard() {
     <>
         <Grid container spacing={3}>
           {/* the available space on the page is 12 so 9 is 75% of the space */}
-          <Grid size={7}>
+          <Grid size={8}>
             <ActivityList/>
           </Grid>
-          <Grid size={5} style={{display: "flex", flexDirection: "column", gap: 20}}>
+          <Grid size={4} style={{display: "flex", flexDirection: "column", gap: 20}}>
             {/* here the activities if it does exist then the component will render, so that is why we used &&
             {selectedActivity && !editMode 
             && <ActivityDetail selectedActivity={selectedActivity} cancelSelectActivity={cancelSelectActivity} openForm={openForm}/>}
             {editMode &&
             <ActivityForm closeForm={closeForm} activity={selectedActivity}/>} */}
 
-            here go the activity filters
+            <ActivityFilters/>
           </Grid>
         </Grid>
     </>

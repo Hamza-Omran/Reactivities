@@ -3,7 +3,7 @@ import App from "../layout/App";
 import HomePage from "../../features/home/HomePage";
 import ActivityDashboard from "../../features/activities/dashbaord/ActivityDashboard";
 import ActivityForm from "../../features/activities/form/ActivityForm";
-import ActivityDetail from "../../features/activities/details/ActivityDetail";
+import ActivityDetailPage from "../../features/activities/details/ActivityDetailPage";
 
 export const router = createBrowserRouter([
     {
@@ -12,7 +12,7 @@ export const router = createBrowserRouter([
         children: [
             {path: "", element: <HomePage/>},
             {path: "activities", element: <ActivityDashboard/>},
-            {path: "activities/:id", element: <ActivityDetail/>},
+            {path: "activities/:id", element: <ActivityDetailPage/>},
             // now when we change from edit to create the form doesn't change too so if we could tell react these are two
             // different and each with id then it will dispose the old one and mount the new form
             {path: "createActivity", element: <ActivityForm key={"create"}/>},

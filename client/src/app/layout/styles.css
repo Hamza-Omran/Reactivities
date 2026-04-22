@@ -1,0 +1,8 @@
+/* we try to style as less as possible
+and if we want to select a component then we might go to the inspect and select from there */
+
+.react-calendar {
+    /* the react calendar styles are being mostly lower than ours so we will use !important */
+    width: 100% !important;
+    border: none !important;
+}

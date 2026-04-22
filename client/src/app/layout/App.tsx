@@ -1,6 +1,7 @@
 import { Box, Container, CssBaseline } from "@mui/material";
 import NavBar from "./NavBar";
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
+import HomePage from "../../features/home/HomePage";
 
 function App() {
 
@@ -54,20 +55,24 @@ function App() {
   // const handleCloseForm = () => {
   //   setEditMode(false);
   // }
-
+  
+  const location = useLocation();
 
   return (
     // <> == <Fragment> and we will use Box instead so we can add styling
     <Box sx={{bgcolor: "#eee", minHeight: "100vh"}}>
       <CssBaseline/>
-      <NavBar/>
+      {location.pathname === '/'? <HomePage/> :
+      <>
+        <NavBar/>
         {/* we use map to loop over the list */}
         {/* we don't need to do this {activities.map((activity : Activity) => (
             since we did defined its type at the higher scope*/}
-      <Container maxWidth="xl" sx={{mt: 3}}>
+        <Container maxWidth="xl" sx={{mt: 3}}>
         {/* now when we go to a specific route the component outlet will be replaced with that component we are going to */}
           <Outlet/>
       </Container>
+      </> }
     </Box>
   )
 }
