@@ -1,7 +1,9 @@
-import { AppBar, Box, Container, MenuItem, MenuList, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Container, LinearProgress, MenuItem, MenuList, Toolbar, Typography } from '@mui/material';
 import { Group } from '@mui/icons-material';
 import { NavLink } from 'react-router';
 import MenuItemLink from '../shared/components/MenuItemLink';
+import { useStore } from '../../lib/hooks/useStore';
+import { Observer } from 'mobx-react-lite';
 
 // rfc shortcut is for reactFunctionalComponent
 
@@ -10,10 +12,14 @@ import MenuItemLink from '../shared/components/MenuItemLink';
 // }
 
 export default function NavBar() { 
+
+    const {uiStore} = useStore();
+
   return (
     // the sx property is like a system style as it gives us access to ui styling or the material UI theme engine as well
         <Box sx={{ flexGrow: 1 }}>
-        <AppBar position="static" sx={{backgroundImage: 'linear-gradient(135deg, #182a73 0%, #218aae 69%, #20a7ac 89%)'}}>
+        <AppBar position="static" 
+            sx={{backgroundImage: 'linear-gradient(135deg, #182a73 0%, #218aae 69%, #20a7ac 89%)', position: 'relative'}}>
             <Container maxWidth='xl'>
                 <Toolbar sx={{display: "flex", justifyContent: "space-between"}}>
                     <Box>
@@ -33,6 +39,9 @@ export default function NavBar() {
                         <MenuItemLink to="/createActivity">
                                 Create Activity
                             </MenuItemLink>
+                        <MenuItemLink to="/counter">
+                                Counter
+                            </MenuItemLink>
                         </MenuList>
                     </Box>
                     <MenuList>
@@ -40,6 +49,20 @@ export default function NavBar() {
                     </MenuList>
                 </Toolbar>
             </Container>
+            <Observer>
+                {()=> uiStore.isLoading? (
+                    <LinearProgress 
+                        color='secondary' 
+                        sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: 4
+                        }}
+                    />
+                ) : null}
+            </Observer>
         </AppBar>
         </Box>
   )

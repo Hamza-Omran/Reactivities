@@ -1,16 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import agent from "../api/agent";
+import { useLocation } from "react-router";
 
 export const useActivities = (id?: string) => {
 
     const queryClient = useQueryClient();
+
+    const location = useLocation();
+
+    // now when we go to the create activity tab there is nothing to be loaded however the loading is taking place
+    // so we want the list to be loaded only if it is in this route
 
     const {data: activities, isPending} = useQuery({
             queryKey: ['activities'],
             queryFn: async () => {
             const response = await agent.get<Activity[]>('/activities');
             return response.data;
-        }
+        },
+        // staleTime: 1000 * 60 * 5 // for 5 min
+        enabled: !id && location.pathname === '/activities'
     });
     // there is qui
     // te no difference in this stage between isloading and ispending
