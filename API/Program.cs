@@ -1,5 +1,8 @@
+using API.Middleware;
 using Application.Activities.Queries;
+using Application.Activities.Validators;
 using Application.Core;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 
@@ -17,15 +20,23 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 // and as this adds header to our https response we need to add a middleware for it
 // the order doesn't matter in services
 builder.Services.AddCors();
-builder.Services.AddMediatR(x => 
-    x.RegisterServicesFromAssemblyContaining<GetActivityList.Handler>()); // as we choose this (RegisterServicesFromAssemblyContaining) here we can add one handler and the others will be automatically registered
+builder.Services.AddMediatR(x => {
+    x.RegisterServicesFromAssemblyContaining<GetActivityList.Handler>();
+    // as we don't know the type we specify <,> 
+    x.AddOpenBehavior(typeof(ValidationBehaviour<,>));
+}); // as we choose this (RegisterServicesFromAssemblyContaining) here we can add one handler and the others will be automatically registered
 // we used this way of overload as the package is updated than neil cummings!    
 builder.Services.AddAutoMapper(cfg => {}, typeof(MappingProfiles).Assembly); // the automapper needs to know where is the assembly is to register the mapping profiles with our application => the assembly is the .dll file
-
+builder.Services.AddValidatorsFromAssemblyContaining<CreateActivityValidator>();
+builder.Services.AddTransient<ExceptionMiddleware>(); // transient means this service is going to be instantiated when needed and disposed as soon as the exception has been completed effectively and is no longer needed
 
 var app = builder.Build();
 
 // when we add a middleware it is important to take care about the order since it is fussy about the ordering
+
+// when it comes to the exception middleware it comes on the top of middleware pipeline
+app.UseMiddleware<ExceptionMiddleware>();
+
 // Configure the HTTP request pipeline.
 
 app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod()

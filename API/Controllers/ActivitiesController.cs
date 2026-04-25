@@ -1,5 +1,6 @@
 using System;
 using Application.Activities.Commands;
+using Application.Activities.DTOs;
 using Application.Activities.Queries;
 using Domain;
 using MediatR;
@@ -39,6 +40,9 @@ public class ActivitiesController : BaseApiController
         );
     }
 
+    // if we weren't using the clean pattern architecture, then the typical thing we would do is to handle the exceptions in 
+    // our controllers, but that is not good as we consider this to be the job of application layer
+    // so what would be good to do is to return an object result
     [HttpGet("{id}")]
     public async Task<ActionResult<Activity>> GetActivityDetail(string id)
     {
@@ -50,28 +54,26 @@ public class ActivitiesController : BaseApiController
 
         // return activity;
 
-        return await Mediator.Send(new GetActivityDetails.Query{Id = id});
+        return HandleResults(await Mediator.Send(new GetActivityDetails.Query{Id = id}));        
     }
 
     [HttpPost]
-    public async Task<ActionResult<string>> CreateActivity(Activity activity)
+    public async Task<ActionResult<string>> CreateActivity(CreateActivityDto activityDto)
     {
-        return await Mediator.Send(new CreateActivity.Command{Activity = activity});
+        return HandleResults(await Mediator.Send(new CreateActivity.Command{ActivityDto = activityDto}));
     }
     
     [HttpPut]
-    public async Task<ActionResult> EditActivity(Activity activity)
+    public async Task<ActionResult> EditActivity(EditActivityDto activity)
     {
-        await Mediator.Send(new EditActivity.Command{Activity = activity});
-        // we use it to return nothing
-        return NoContent();
+        return HandleResults(await Mediator.Send(new EditActivity.Command{ActivityDto = activity}));
+        // // we use it to return nothing
+        // return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteActivity(string id)
     {
-        await Mediator.Send(new DeleteActivity.Command{Id = id});
-
-        return Ok();
+        return HandleResults(await Mediator.Send(new DeleteActivity.Command{Id = id}));
     }
 }

@@ -1,7 +1,11 @@
 using System;
+using Application.Activities.DTOs;
+using AutoMapper;
 using Domain;
+using FluentValidation;
 using MediatR;
 using Persistence;
+using Application.Core;
 
 namespace Application.Activities.Commands;
 
@@ -9,15 +13,18 @@ namespace Application.Activities.Commands;
 // but in this command in this pattern we are allowed only in this case to return thing from the command
 public class CreateActivity
 {
-    public class Command : IRequest<string>
+    public class Command : IRequest<Result<String>>
     {
-        public required Activity Activity { get; set; }
+        public required CreateActivityDto ActivityDto { get; set; }
     }
 
-    public class Handler(AppDbContext context) : IRequestHandler<Command, string>
+    public class Handler(AppDbContext context, IMapper mapper) : IRequestHandler<Command, Result<string>>
     {
-        public async Task<string> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {
+
+            var Activity = mapper.Map<Activity>(request.ActivityDto); // now the mapper will throw exception but we will handle this later
+
             // logic
             // why not using the AddAsync? because
             // Begins tracking the given entity, and any other reachable entities that are not already being tracked, 
@@ -26,11 +33,13 @@ public class CreateActivity
             //This method is async only to allow special value generators, such as the one used by 
             // Microsoft.EntityFrameworkCore.Metadata.SqlServerValueGenerationStrategy.SequenceHiLo', 
             // to access the database asynchronously. For all other cases the non async method should be used.
-            context.Activities.Add(request.Activity);
+            context.Activities.Add(Activity);
 
-            await context.SaveChangesAsync(cancellationToken);
+            var result = await context.SaveChangesAsync(cancellationToken) > 0;
 
-            return request.Activity.Id;
+            if(!result) return Result<string>.Failure("Failed to create the activity.", 400);
+
+            return Result<string>.Success(Activity.Id);
         }
     }
 }
