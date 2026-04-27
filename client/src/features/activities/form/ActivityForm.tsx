@@ -1,7 +1,15 @@
-import { Box, Button, Paper, TextField, Typography } from "@mui/material";
-import type { FormEvent } from "react";
+import { Box, Button, Paper, Typography } from "@mui/material";
 import { useActivities } from "../../../lib/hooks/useActivities";
 import { Link, useNavigate, useParams } from "react-router";
+import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { activitySchema, type ActivitySchema } from "../../../lib/schemas/activitySchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import TextInput from "../../../app/shared/components/TextInput";
+import SelectInput from "../../../app/shared/components/SelectInput";
+import { categoryOptions } from "./categoryOptions";
+import DateTimeInput from "../../../app/shared/components/DateTimeInput";
+import LocationInput from "../../../app/shared/components/LocationInput";
 
 // type Props = {
 //   closeForm: () => void,
@@ -10,34 +18,46 @@ import { Link, useNavigate, useParams } from "react-router";
 
 export default function ActivityForm() {
   
+  //  onSubmit is the default mode
+  const {reset, control, handleSubmit} = useForm<ActivitySchema>({
+    mode: 'onTouched',
+    resolver: zodResolver(activitySchema) as any
+  });
+
+  const navigate = useNavigate();
   const {id} = useParams();
   const {updateActivity, createActivity, activity, isLoadingActivity} = useActivities(id);
-  const navigate = useNavigate();
+
+  // the second parameter is called array of dependencies
+  useEffect(() => {
+    if(activity) reset({
+      ...activity,
+      location: {
+        city: activity.city,
+        venue: activity.venue,
+        latitude: activity.latitude,
+        longitude: activity.longitude
+      }
+    })
+  }, [activity, reset]);
 
   //  so in order to make sure the update is happening even after closing the form we need to use async
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    
-    event.preventDefault();
-    
-    const formData = new FormData(event.currentTarget);
-    
-    // the key here is the name in the form fields and the value is what is written
-    const data : {[key: string]: FormDataEntryValue} = {}
-    formData.forEach((value, key) => {
-      data[key] = value;
-    });
-    
-    if(activity) {
-      data.id = activity.id;
-      await updateActivity.mutateAsync(data as unknown as Activity);  // this is just to cast it in Js
-      navigate(`/activities/${activity.id}`)
-    }
-    else{
-      createActivity.mutate(data as unknown as Activity, {
-        onSuccess: (id) => {
-          navigate(`/activities/${id}`);
-        }
-      })
+  const onSubmit = async (data : ActivitySchema) => {
+    const {location, ...rest} = data;
+    const flattenedData = {...rest, ...location};
+
+    try {
+      if(activity) {
+        updateActivity.mutate({...activity, ...flattenedData}, {
+          onSuccess: () => navigate(`/activities/${activity.id}`)
+        })
+      } else {
+        createActivity.mutate(flattenedData, {
+          onSuccess: (id) => navigate(`/activities/${id}`)
+        })
+      }
+    } catch (error) {
+      console.log(error)
     }
   }
   
@@ -50,19 +70,21 @@ export default function ActivityForm() {
       <Typography variant="h5" gutterBottom color="primary">
         {activity ? 'Edit Activity' : 'Create Activity'}
       </Typography>
-      <Box component='form' onSubmit={handleSubmit} style={{display: "flex", flexDirection: "column", gap: 25}}>
+      <Box component='form' onSubmit={handleSubmit(onSubmit)} style={{display: "flex", flexDirection: "column", gap: 25}}>
         {/* when we are using the value here it is like we are saying this is a controlled input => so we can't edit it if filled
         and when changing the form from create to edit it says can't change type from uncontrolled to controlled 
         and defaultValue is for how we use uncontrolled value instead*/}
-        <TextField name="title" label="Title" defaultValue={activity?.title}/>
+        {/* for the name we don't need it in react hook form as we gonna pass it inside hte register */}
+        {/* !! will cast it into boolean */}
+        <TextInput label='Title' control={control} name="title"/>
         {/* if we specified a property like multiline then it is true by default so no need to assignment */}
-        <TextField name="description" label="Description" multiline rows={3} defaultValue={activity?.description}/>
-        <TextField name="category" label="Category" defaultValue={activity?.category}/>
-        <TextField name="date" label="Date" type="date" defaultValue={activity?.date ?
-          new Date(activity.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] 
-        }/>
-        <TextField name="city" label="City" defaultValue={activity?.city}/>
-        <TextField name="venue" label="Venue" defaultValue={activity?.venue}/>
+        <TextInput label='Description' control={control} name="description" multiline rows={3}/>
+        <Box sx={{display: 'flex', gap: 3}}>
+          <SelectInput items={categoryOptions} label='Category' control={control} name="category"/>
+          <DateTimeInput label='Date' control={control} name="date"/>
+        </Box>
+        <LocationInput control={control} label="Enter the location" name="location"/>
+        
         <Box style={{display: "flex", justifyContent: "end", gap: 10}}>
           <Button component={Link} to={`/activities/${activity?.id}`} color="inherit">Cancel</Button>
           <Button 

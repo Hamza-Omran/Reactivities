@@ -12,23 +12,27 @@ import { RouterProvider } from 'react-router';
 import { router } from './app/router/Routes.tsx';
 import { StoreContext, store } from "./lib/stores/store.ts";
 import { ToastContainer } from 'react-toastify';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 
 const queryClient =  new QueryClient();
 
 createRoot(document.getElementById('root')!).render(
-  // the strict mode will make the useEffect execute twice and this won't happen in the production
-  // and it execute the useEffect for the second time to clean up the code and it will execute it for the 2nd time regardless there is a clean up code or not
-  <StrictMode>
-    {/* we will need to use our storecontext as a provider so the rest of our react application have access to it */}
-    {/* since it uses context it has the .Provider */}
-    <StoreContext.Provider value={store}>
-      {/* now the app will have access to the client */}
-      <QueryClientProvider client={queryClient}>
-        <ReactQueryDevtools/>
-        <ToastContainer position='bottom-right' theme='colored'/>
-        <RouterProvider router={router}/>
-      </QueryClientProvider>
-    </StoreContext.Provider> 
-  </StrictMode>,
+    // the strict mode will make the useEffect execute twice and this won't happen in the production
+    // and it execute the useEffect for the second time to clean up the code and it will execute it for the 2nd time regardless there is a clean up code or not
+    <StrictMode>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+            {/* we will need to use our storecontext as a provider so the rest of our react application have access to it */}
+            {/* since it uses context it has the .Provider */}
+            <StoreContext.Provider value={store}>
+                {/* now the app will have access to the client */}
+                <QueryClientProvider client={queryClient}>
+                    <ReactQueryDevtools/>
+                    <ToastContainer position='bottom-right' theme='colored'/>
+                    <RouterProvider router={router}/>
+                </QueryClientProvider>
+            </StoreContext.Provider> 
+        </LocalizationProvider>
+    </StrictMode>,
 )

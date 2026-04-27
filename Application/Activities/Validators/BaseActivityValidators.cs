@@ -14,7 +14,7 @@ public class BaseActivityValidators<T, TDto> : AbstractValidator<T> where TDto :
         RuleFor(x=> selector(x).Description).NotEmpty().WithMessage("Description is required.");
         RuleFor(x=> selector(x).Date).GreaterThan(DateTime.UtcNow).WithMessage("Date must be in the future");
         RuleFor(x=> selector(x).Category).NotEmpty().WithMessage("Category is required");
-        RuleFor(x=> selector(x).City).NotEmpty().WithMessage("City is required");
+      //   RuleFor(x=> selector(x).City).NotEmpty().WithMessage("City is required");
         RuleFor(x=> selector(x).Venue).NotEmpty().WithMessage("Venue is required");
         RuleFor(x=> selector(x).Latitude)
         .NotEmpty().WithMessage("Latitude is required")
