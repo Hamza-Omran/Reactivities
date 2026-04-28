@@ -4,6 +4,7 @@ using Application.Activities.DTOs;
 using Application.Activities.Queries;
 using Domain;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -22,6 +23,7 @@ public class ActivitiesController : BaseApiController
     // the old way of doing dependency injection is to make a class and make it takes as a parameter the class we wish to inject and assign it to a variable 
     // but now we use the primary constructor and we use it when we have a single constructor rather than using the boilerplate
 
+    // [AllowAnonymous] // this is to make this endpoint accessed by anyone when the programs make them all authorized
     [HttpGet]
     // we use action result when we want to return an http respond
     public async Task<ActionResult<List<Activity>>> GetActivities( // CancellationToken ct
@@ -43,6 +45,7 @@ public class ActivitiesController : BaseApiController
     // if we weren't using the clean pattern architecture, then the typical thing we would do is to handle the exceptions in 
     // our controllers, but that is not good as we consider this to be the job of application layer
     // so what would be good to do is to return an object result
+    // [Authorize] this is to make the endpoint authorized
     [HttpGet("{id}")]
     public async Task<ActionResult<Activity>> GetActivityDetail(string id)
     {

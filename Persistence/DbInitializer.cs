@@ -1,13 +1,32 @@
 using System;
 using System.Runtime.CompilerServices;
 using Domain;
+using Microsoft.AspNetCore.Identity;
 
 namespace Persistence;
 
 public class DbInitializer
 {
-    public static async Task SeedData(AppDbContext context)
+    public static async Task SeedData(AppDbContext context, UserManager<User> userManager)
     {
+        if(!userManager.Users.Any())
+        {
+            var users = new List<User>
+            {
+                new() {DisplayName = "Bob", UserName = "bob@test.com", Email= "bob@test.com"},
+                new() {DisplayName = "Tom", UserName = "tom@test.com", Email= "tom@test.com"},
+                new() {DisplayName = "Jane", UserName = "jane@test.com", Email= "jane@test.com"}
+            };
+
+            foreach (var user in users)
+            {
+                // the asp .net by default requires a strong password min 6 chars+non-alpha numeric +alphanumeric+lower and upper cases
+                // and this method create and save it in the db too
+                await userManager.CreateAsync(user, "Pa$$w0rd");
+            }
+
+        }
+
         if(context.Activities.Any()) return;
 
         var activities =  new List<Activity>
