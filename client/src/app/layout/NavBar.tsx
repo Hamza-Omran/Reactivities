@@ -4,6 +4,8 @@ import { NavLink } from 'react-router';
 import MenuItemLink from '../shared/components/MenuItemLink';
 import { useStore } from '../../lib/hooks/useStore';
 import { Observer } from 'mobx-react-lite';
+import { useAccount } from '../../lib/hooks/useAccount';
+import UserMenu from './UserMenu';
 
 // rfc shortcut is for reactFunctionalComponent
 
@@ -14,6 +16,7 @@ import { Observer } from 'mobx-react-lite';
 export default function NavBar() { 
 
     const {uiStore} = useStore();
+    const {currentUser} = useAccount();
 
   return (
     // the sx property is like a system style as it gives us access to ui styling or the material UI theme engine as well
@@ -36,20 +39,24 @@ export default function NavBar() {
                             <MenuItemLink to="/activities">
                             Activities
                             </MenuItemLink>
-                        <MenuItemLink to="/createActivity">
-                                Create Activity
-                            </MenuItemLink>
-                        <MenuItemLink to="/counter">
+                            <MenuItemLink to="/counter">
                                 Counter
                             </MenuItemLink>
-                        <MenuItemLink to="/errors">
+                            <MenuItemLink to="/errors">
                                 Errors
                             </MenuItemLink>
                         </MenuList>
                     </Box>
-                    <MenuList>
-                        <MenuItem>User menu</MenuItem>
-                    </MenuList>
+                    <Box sx={{display: 'flex', alignItems: 'center'}}>
+                        {currentUser? (
+                            <UserMenu/>
+                        ): (
+                            <MenuList sx={{display: 'flex'}}>
+                                <MenuItemLink to='/login'>Login</MenuItemLink>
+                                <MenuItemLink to='/register'>Register</MenuItemLink>
+                            </MenuList>
+                        )}
+                    </Box>
                 </Toolbar>
             </Container>
             <Observer>

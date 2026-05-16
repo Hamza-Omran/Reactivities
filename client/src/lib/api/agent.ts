@@ -13,8 +13,14 @@ const sleep = (delay: number) => {
 // now this file is not react related but because mobx is not react specific, we can do something here to update our mobx store 
 // and then using mobx-react-lite integration to use it in our components so they react to any actions that we call from agent.ts
 const agent = axios.create({
-    baseURL: import.meta.env.VITE_API_URL // we need to specify VITE_ and this will the vite to pass it to the js app
+    baseURL: import.meta.env.VITE_API_URL, // we need to specify VITE_ and this will the vite to pass it to the js app
+    withCredentials: true // so any axios being used should provide credentials
 });
+
+// now the cookies is httponly so our react application can't read it or do anything with it
+// and now we need to know if we are authenticated or not
+// that is why the backend provides user info endpoint and once we are logged in we gonna call it and get the status of 
+// authentication from it
 
 
 

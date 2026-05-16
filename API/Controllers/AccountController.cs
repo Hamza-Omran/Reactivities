@@ -48,6 +48,7 @@ public class AccountController(SignInManager<User> signInManager) : BaseApiContr
 // Unauthenticated user calls it → Returns 204 NoContent (empty response)
 // Authenticated user calls it → Returns user info (DisplayName, Email, etc.)
 // So even though it's public, only authenticated users get actual data. It's a safe pattern used in most web apps
+//  But the browser AUTOMATICALLY SENDS it with API requests and that is out the httpOnly means so no js can ever access it even if malicious
 
     [AllowAnonymous] // the reason for doing this is that we are going to call it from our client when the user first come to our
     //  application or refreshes the page. because at that point if they are logged in then all what we have is access to the 
