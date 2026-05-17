@@ -4,6 +4,8 @@ using Application.Activities.Validators;
 using Application.Core;
 using Domain;
 using FluentValidation;
+using Infrastructure.Security;
+using Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -34,6 +36,9 @@ builder.Services.AddMediatR(x => {
     // as we don't know the type we specify <,> 
     x.AddOpenBehavior(typeof(ValidationBehaviour<,>));
 }); // as we choose this (RegisterServicesFromAssemblyContaining) here we can add one handler and the others will be automatically registered
+
+// this is scoped to the http request itself
+builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 // we used this way of overload as the package is updated than neil cummings!    
 builder.Services.AddAutoMapper(cfg => {}, typeof(MappingProfiles).Assembly); // the automapper needs to know where is the assembly is to register the mapping profiles with our application => the assembly is the .dll file
 builder.Services.AddValidatorsFromAssemblyContaining<CreateActivityValidator>();
@@ -44,6 +49,15 @@ builder.Services.AddIdentityApiEndpoints<User>(opt =>
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddAuthorization(opt =>
+{
+    opt.AddPolicy("IsActivityHost", policy =>
+    {
+        policy.Requirements.Add(new IsHostRequirement());
+    });
+});
+builder.Services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
+
 var app = builder.Build();
 
 // when we add a middleware it is important to take care about the order since it is fussy about the ordering

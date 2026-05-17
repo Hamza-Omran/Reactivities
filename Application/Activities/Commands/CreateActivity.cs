@@ -2,10 +2,10 @@ using System;
 using Application.Activities.DTOs;
 using AutoMapper;
 using Domain;
-using FluentValidation;
 using MediatR;
 using Persistence;
 using Application.Core;
+using Infrastructure.Interfaces;
 
 namespace Application.Activities.Commands;
 
@@ -18,10 +18,12 @@ public class CreateActivity
         public required CreateActivityDto ActivityDto { get; set; }
     }
 
-    public class Handler(AppDbContext context, IMapper mapper) : IRequestHandler<Command, Result<string>>
+    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor) 
+        : IRequestHandler<Command, Result<string>>
     {
         public async Task<Result<string>> Handle(Command request, CancellationToken cancellationToken)
         {
+            var User = await userAccessor.GetUserAsync();
 
             var Activity = mapper.Map<Activity>(request.ActivityDto); // now the mapper will throw exception but we will handle this later
 
@@ -34,6 +36,15 @@ public class CreateActivity
             // Microsoft.EntityFrameworkCore.Metadata.SqlServerValueGenerationStrategy.SequenceHiLo', 
             // to access the database asynchronously. For all other cases the non async method should be used.
             context.Activities.Add(Activity);
+
+            var attendee = new ActivityAttendee
+            {
+                ActivityId = Activity.Id,
+                UserId = User.Id,
+                IsHost = true
+            };
+
+            Activity.Attendees.Add(attendee);
 
             var result = await context.SaveChangesAsync(cancellationToken) > 0;
 

@@ -26,7 +26,7 @@ public class ActivitiesController : BaseApiController
     // [AllowAnonymous] // this is to make this endpoint accessed by anyone when the programs make them all authorized
     [HttpGet]
     // we use action result when we want to return an http respond
-    public async Task<ActionResult<List<Activity>>> GetActivities( // CancellationToken ct
+    public async Task<ActionResult<List<ActivityDto>>> GetActivities( // CancellationToken ct
         )
     {
         // 503 is too busy and will be sent when the server is too busy 
@@ -47,7 +47,7 @@ public class ActivitiesController : BaseApiController
     // so what would be good to do is to return an object result
     // [Authorize] this is to make the endpoint authorized
     [HttpGet("{id}")]
-    public async Task<ActionResult<Activity>> GetActivityDetail(string id)
+    public async Task<ActionResult<ActivityDto>> GetActivityDetail(string id)
     {
         // // if not found then this could be null so its type is var
         // var activity = await context.Activities.FindAsync(id);
@@ -66,17 +66,26 @@ public class ActivitiesController : BaseApiController
         return HandleResults(await Mediator.Send(new CreateActivity.Command{ActivityDto = activityDto}));
     }
     
-    [HttpPut]
-    public async Task<ActionResult> EditActivity(EditActivityDto activity)
+    [HttpPut("{id}")]
+    [Authorize(Policy = "IsActivityHost")]
+    public async Task<ActionResult> EditActivity(string id, EditActivityDto activity)
     {
+        activity.Id = id;
         return HandleResults(await Mediator.Send(new EditActivity.Command{ActivityDto = activity}));
         // // we use it to return nothing
         // return NoContent();
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = "IsActivityHost")]
     public async Task<ActionResult> DeleteActivity(string id)
     {
         return HandleResults(await Mediator.Send(new DeleteActivity.Command{Id = id}));
+    }
+
+    [HttpPost("{id}/attend")]
+    public async Task<ActionResult> Attend(string id)
+    {
+        return HandleResults(await Mediator.Send(new UpdateAttendance.Command{Id = id}));
     }
 }
