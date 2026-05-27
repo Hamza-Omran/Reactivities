@@ -86,6 +86,7 @@ public class ActivitiesController : BaseApiController
     [HttpPost("{id}/attend")]
     public async Task<ActionResult> Attend(string id)
     {
+        // return BadRequest("testing 134");
         return HandleResults(await Mediator.Send(new UpdateAttendance.Command{Id = id}));
     }
 }

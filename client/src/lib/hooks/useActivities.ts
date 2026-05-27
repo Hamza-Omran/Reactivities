@@ -7,7 +7,7 @@ import { useAccount } from "./useAccount";
 export const useActivities = (id?: string) => {
 
     const queryClient = useQueryClient();
-    const currentUser = useAccount();
+    const {currentUser} = useAccount();
     const location = useLocation();
 
     // now when we go to the create activity tab there is nothing to be loaded however the loading is taking place
@@ -20,7 +20,16 @@ export const useActivities = (id?: string) => {
             return response.data;
         },
         // staleTime: 1000 * 60 * 5 // for 5 min
-        enabled: !id && location.pathname === '/activities' && !!currentUser
+        enabled: !id && location.pathname === '/activities' && !!currentUser,
+        select: data => { 
+            return data.map(activity => {
+                return {
+                    ...activity, 
+                    isHost: currentUser?.id === activity.hostId,
+                    isGoing: activity.attendees.some(x => x.id === currentUser?.id)
+                }
+            })
+        }
     });
     // there is qui
     // te no difference in this stage between isloading and ispending
@@ -35,7 +44,14 @@ export const useActivities = (id?: string) => {
             return response.data;
         },
         // the !! cast it into boolean
-        enabled: !!id && !!currentUser 
+        enabled: !!id && !!currentUser ,
+        select: data => { 
+                return {
+                    ...data, 
+                    isHost: currentUser?.id === data.hostId,
+                    isGoing: data.attendees.some(x => x.id === currentUser?.id)
+                }
+        }
     });
 
     const updateActivity = useMutation({
@@ -75,5 +91,52 @@ export const useActivities = (id?: string) => {
         }
     })
 
-    return {activities, isLoading, updateActivity, createActivity, deleteActivity, activity, isLoadingActivity}
+    const updateAttendance = useMutation({
+        mutationFn: async (id: string) => {
+            await agent.post(`/activities/${id}/attend`)
+        },
+        // when we print the log for the mutation fn and the on sucess both should have the same id
+        // and as we are using the id of the main class then we need to pass the id when we use the useActivities
+        onMutate: async (activityId: string) => {
+            // we gonna cancel any query as we don't anything to override our updates by synching to the api at this stage
+            await queryClient.cancelQueries({queryKey: [activities, activityId]});
+
+            // now to get the activity from the cache
+            const prevActivity = queryClient.getQueryData<Activity>(['activities', activityId]);
+
+            // this way we are updating only inside our cache
+            queryClient.setQueryData<Activity>(['activities', activityId], oldActivity => {
+                if(!oldActivity || !currentUser) return oldActivity;
+
+                const isHost = oldActivity.hostId === currentUser.id;
+                const isAttending = oldActivity.attendees.some(x => x.id === currentUser.id);
+
+                return {
+                    ...oldActivity,
+                    isCancelled: isHost ? !oldActivity.isCancelled : oldActivity.isCancelled,
+                    attendees: isAttending 
+                        ? isHost
+                            ? oldActivity.attendees
+                            : oldActivity.attendees.filter(x => x.id !== currentUser.id)
+                        : [...oldActivity.attendees, {
+                            id: currentUser.id,
+                            displayName: currentUser.displayName,
+                            imageUrl: currentUser.imageUrl
+                        }] 
+
+                }
+            })
+
+            return {prevActivity}
+        },
+        onError: (error, activityId, context) => {
+            console.log(error)
+            if(context?.prevActivity) {
+                queryClient.setQueryData(['activities', activityId], context.prevActivity)
+
+            }
+        }
+    })
+
+    return {activities, isLoading, updateActivity, createActivity, deleteActivity, activity, isLoadingActivity, updateAttendance}
 }
