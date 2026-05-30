@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
+using Infrastructure.Photos;
+using Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +41,7 @@ builder.Services.AddMediatR(x => {
 
 // this is scoped to the http request itself
 builder.Services.AddScoped<IUserAccessor, UserAccessor>();
+builder.Services.AddScoped<IPhotoService, PhotoService>();
 // we used this way of overload as the package is updated than neil cummings!    
 builder.Services.AddAutoMapper(cfg => {}, typeof(MappingProfiles).Assembly); // the automapper needs to know where is the assembly is to register the mapping profiles with our application => the assembly is the .dll file
 builder.Services.AddValidatorsFromAssemblyContaining<CreateActivityValidator>();
@@ -57,6 +60,7 @@ builder.Services.AddAuthorization(opt =>
     });
 });
 builder.Services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 var app = builder.Build();
 
