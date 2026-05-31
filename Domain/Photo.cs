@@ -7,7 +7,9 @@ public class Photo
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public required string Url { get; set; }
-    public required string PublicId { get; set; }
+    
+    [JsonIgnore]
+    public string PublicId { get; set; } = null!;
 
     // we add these navigation properties for the user entity so entity framework by convention will create the relationship
     // in such a way that if we were to delete a user, then it would also provide the cascade delete so that the photo will be

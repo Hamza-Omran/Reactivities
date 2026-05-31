@@ -24,8 +24,8 @@ export default function LocationInput<T extends FieldValues>(props: Props<T>) {
         }
     }, [field.value])
 
-    // dedupe is to not have duplicatoin suggestions form the api and we will add & to add the query
-    const locationUrl = 'your url!'
+    // dedupe is to not have duplication suggestions form the api and we will add & to add the query
+    const locationUrl = 'https://api.locationiq.com/v1/autocomplete?key=pk.be6ba92a4b4273a1ca2214aec46cfbc7&limit=5&dedupe=1&'
     // will only recompute the memorized value when one of the deps has changed
     // now this is going to be a function and function when our components are rerendered are executed again so this way it will not be executed again
     // now we should have used useCallback as our deps are not going to be changed by any way however it doesn't accepts a function as its parameter

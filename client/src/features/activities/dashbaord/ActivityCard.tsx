@@ -22,15 +22,19 @@ export default function ActivityCard({activity}: Props) {
     <Card elevation={3} sx={{borderRadius: 3}}>
 
       <Box sx={{display: "flex", alignItems: "center" , justifyContent: 'space-between'}}>
-        <CardHeader avatar={<Avatar 
-        sx={{height: 80, width: 80, fontWeight: 'bold',
-          fontSize: 20}}/>} 
-        title={activity.title} 
-        subheader={
-          <>
-            Hosted by{' '} <Link to={`/profiles/{activity.hostId}`}>{activity.hostDisplayName}</Link>
-          </>
-        }/>
+        <CardHeader avatar={
+          <Avatar 
+            src={activity.hostImageUrl}
+            sx={{height: 80, width: 80, fontWeight: 'bold',
+              fontSize: 20}}/>} 
+            title={activity.title} 
+            subheader={
+              <>
+                Hosted by{' '} <Link to={`/profiles/{activity.hostId}`}>{activity.hostDisplayName}</Link>
+              </>
+            }
+            alt="image of host"
+          />
 
         <Box sx={{display: "flex", flexDirection: "column", gap: 2, mr: 2}}>
           {(activity.isHost || activity.isGoing) && <Chip label={label} variant="outlined" color={color} sx={{borderRadius: 2}}/>}

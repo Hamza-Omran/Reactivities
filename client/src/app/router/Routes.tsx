@@ -11,6 +11,7 @@ import ServerError from "../../features/errors/ServerError";
 import LoginForm from "../../features/account/LoginForm";
 import RequireAuth from "./RequireAuth";
 import RegisterForm from "../../features/account/RegisterForm";
+import ProfilePage from "../../features/profiles/ProfilePage";
 
 export const router = createBrowserRouter([
     {
@@ -23,7 +24,8 @@ export const router = createBrowserRouter([
                 // now when we change from edit to create the form doesn't change too so if we could tell react these are two
                 // different and each with id then it will dispose the old one and mount the new form
                 {path: "createActivity", element: <ActivityForm key={"create"}/>},
-                {path: "manage/:id", element: <ActivityForm/>}
+                {path: "manage/:id", element: <ActivityForm/>},
+                {path: "profile/:id", element: <ProfilePage/>}
             ]},
             {path: "", element: <HomePage/>},
             {path: "counter", element: <Counter/>},
