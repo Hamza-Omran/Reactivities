@@ -29,6 +29,7 @@
     <Folder Include="Activities/Validators/" />
     <Folder Include="Profiles/Commands/" />
     <Folder Include="Profiles/Queries/" />
+    <Folder Include="Profiles/Validators/" />
   </ItemGroup>
 
 </Project>
