@@ -1,4 +1,4 @@
-import { format, type DateArg } from "date-fns";
+import { format, formatDistanceToNow, type DateArg } from "date-fns";
 import z from "zod";
 
 //  date arg will accept any type of a date even if a string or js object
@@ -6,4 +6,9 @@ export function formatDate(date: DateArg<Date>) {
     return format(date, 'dd MMM yyyy h:mm a')
 }
 
-export const requiredString =  (fieldName: string) => z.string({error: `${fieldName} is required`}).min(1, {error: `${fieldName} is required`})
+export function timeAgo(date: DateArg<Date>) {
+    return formatDistanceToNow(date) + ' ago'
+}
+
+export const requiredString =  (fieldName: string) => 
+    z.string({error: `${fieldName} is required`}).min(1, {error: `${fieldName} is required`})

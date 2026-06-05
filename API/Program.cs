@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Persistence;
 using Infrastructure.Photos;
 using Application.Interfaces;
+using API.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +34,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 // and as this adds header to our https response we need to add a middleware for it
 // the order doesn't matter in services
 builder.Services.AddCors();
+builder.Services.AddSignalR();
 builder.Services.AddMediatR(x => {
     x.RegisterServicesFromAssemblyContaining<GetActivityList.Handler>();
     // as we don't know the type we specify <,> 
@@ -81,6 +83,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapGroup("api").MapIdentityApi<User>(); // so the login will be /api/login
+app.MapHub<CommentHub>("/comments");
 
 // we can't use the services we initialized here so we gonna use something called service locator pattern
 // and we gonna use the using keyword so anything we are going to create in this scope is going to be disposed by the framework (cleaned)

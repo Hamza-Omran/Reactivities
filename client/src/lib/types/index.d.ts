@@ -23,7 +23,17 @@ type Activity = {
   isHost: boolean
   hostId: string
   hostDisplayName: string
-  hostImageUrl: string
+  hostImageUrl:  string
+}
+
+// the type comment does exist in the js so we can't use that word
+type ChatComment = {
+  id: string
+  createdAt: Date
+  userId: string
+  body: string
+  displayName: string
+  imageUrl?: string
 }
 
 type Profile = {

@@ -17,6 +17,7 @@ public class Activity
     public double Latitude { get; set; }
     public double Longitude { get; set; }
 
-    // navigation properties
+    // navigation properties =>  this is to be able to query them
     public ICollection<ActivityAttendee> Attendees { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
 }
