@@ -30,7 +30,7 @@ export default function ActivityCard({activity}: Props) {
             title={activity.title} 
             subheader={
               <>
-                Hosted by{' '} <Link to={`/profiles/{activity.hostId}`}>{activity.hostDisplayName}</Link>
+                Hosted by{' '} <Link to={`/profile/${activity.hostId}`}>{activity.hostDisplayName}</Link>
               </>
             }
             alt="image of host"
@@ -64,7 +64,7 @@ export default function ActivityCard({activity}: Props) {
         </Box>
       </CardContent>
       <CardContent sx={{pb: 2}}>
-        <Typography variant="body2">activity.description</Typography>
+        <Typography variant="body2">{activity.description}</Typography>
         <Button 
           component={Link} 
           to={`/activities/${activity.id}`} 

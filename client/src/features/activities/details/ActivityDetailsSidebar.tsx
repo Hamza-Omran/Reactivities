@@ -16,7 +16,7 @@ type Props = {
 };
 
 export default function ActivityDetailsSidebar({ activity }: Props) {
-  const following = true;
+  
   return (
     <>
       <Paper
@@ -49,7 +49,7 @@ export default function ActivityDetailsSidebar({ activity }: Props) {
                   <ListItemText>
                     <Typography variant="h6">{att.displayName}</Typography>
                     
-                    {following && (
+                    {att.following && (
                       <Typography variant="body2" sx={{ color: "orange" }}>
                         Following
                       </Typography>
@@ -64,7 +64,7 @@ export default function ActivityDetailsSidebar({ activity }: Props) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "flex-end",
-                gap: 1,
+              gap: 1,
               }}
             >
                 {activity.hostId === att.id && (

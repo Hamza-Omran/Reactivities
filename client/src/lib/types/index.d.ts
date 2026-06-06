@@ -41,6 +41,9 @@ type Profile = {
   displayName: string
   bio?: string
   imageUrl?: string
+  followersCount?: number // we mad it optional so we don't break things in the app as we added it later
+  followingCount?: number
+  following?: boolean
 }
 
 type Photo = {

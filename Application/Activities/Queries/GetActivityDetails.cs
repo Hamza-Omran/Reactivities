@@ -4,6 +4,7 @@ using Application.Core;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Domain;
+using Infrastructure.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -17,7 +18,7 @@ public class GetActivityDetails
         public required string Id { get; set; }
     }
 
-    public class Handler(AppDbContext context, IMapper mapper) : IRequestHandler<Query, Result<ActivityDto>>
+    public class Handler(AppDbContext context, IMapper mapper, IUserAccessor userAccessor) : IRequestHandler<Query, Result<ActivityDto>>
     {
         // it is async as we calling the db
         public async Task<Result<ActivityDto>> Handle(Query request, CancellationToken cancellationToken)
@@ -27,7 +28,7 @@ public class GetActivityDetails
             var activity = await context.Activities
                 // we get this from automapper which is a project to queryable extension and now it gets only the sepcific 
                 // properties we are going to use
-                .ProjectTo<ActivityDto>(mapper.ConfigurationProvider)
+                .ProjectTo<ActivityDto>(mapper.ConfigurationProvider, new {currentUserId = userAccessor.GetUserId()})
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
             // now we can't return not found since we don't have access to https responses, so we gonna use the mediator

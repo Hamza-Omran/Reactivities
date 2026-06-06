@@ -4,7 +4,7 @@ import type { Photo, Profile, User } from "../types";
 import { useMemo } from "react";
 import type { EditProfileSchema } from "../schemas/editProfileSchema";
 
-export const useProfile = (id?: string) => {
+export const useProfile = (id?: string, predicate?: string) => {
     const queryClient = useQueryClient();
     const {data: profile, isLoading: loadingProfile} = useQuery<Profile>({
         queryKey: ['profile', id],
@@ -12,7 +12,7 @@ export const useProfile = (id?: string) => {
             const response = await agent.get<Profile>(`/profiles/${id}`);
             return response.data;
         },
-        enabled: !!id
+        enabled: !!id && !predicate // we do this as in our application we won't need the other queries to be executed if we are calling for the following list only
     })
     
     const {data: photos, isLoading: loadingPhotos} = useQuery<Photo[]>({
@@ -21,7 +21,17 @@ export const useProfile = (id?: string) => {
             const response = await agent.get<Photo[]>(`/profiles/${id}/photos`)
             return response.data;
         },
-        enabled: !!id
+        enabled: !!id && !predicate
+    })
+
+    const {data: followings, isLoading: loadingFollowings} = useQuery<Profile[]>({
+        queryKey: ['followings', id, predicate],
+        queryFn: async () => {
+            const response = 
+                await agent.get<Profile[]>(`/profiles/${id}/follow-list?predicate=${predicate}`)
+            return response.data
+        },
+        enabled: !!id && !!predicate
     })
 
     const uploadPhoto = useMutation({
@@ -116,12 +126,30 @@ export const useProfile = (id?: string) => {
         }
     });
 
+    const updateFollowing = useMutation({
+        mutationFn: async () => {
+            await agent.post(`/profiles/${id}/follow`)
+        },
+        onSuccess: () => {
+            queryClient.setQueryData(['profile', id], (profile: Profile) => {
+                queryClient.invalidateQueries({queryKey: ['followings', id, 'followers']}) // we hard coded followers since it is the only one that is gong to change when we click
+                if(!profile || profile.followersCount === undefined) return profile;
+                return {
+                    ...profile,
+                    following: !profile.following,
+                    followersCount: profile.following ? profile.followersCount-1 : profile.followersCount+1
+                }
+            })
+        }
+    })
+
     // we gonna use useMemo so everytime it is rerendered it won't be setted again
     const isCurrentUser = useMemo(() => {
         return id === queryClient.getQueryData<User>(['user'])?.id
     }, [id, queryClient]);
 
     return {
-        profile, loadingProfile, photos, loadingPhotos, isCurrentUser, uploadPhoto, setMainPhoto, deletePhoto, updateProfile
+        profile, loadingProfile, photos, loadingPhotos, isCurrentUser, uploadPhoto, setMainPhoto, deletePhoto, updateProfile,
+        updateFollowing, followings, loadingFollowings
     }
 }
