@@ -7,6 +7,11 @@
 
 // for prettying the code we can right click and choose format document or use the shortcut
 
+type PagedList<T, TCursor> = {
+  items: T[],
+  nextCursor: TCursor
+}
+
 type Activity = {
   id: string
   title: string
@@ -23,7 +28,7 @@ type Activity = {
   isHost: boolean
   hostId: string
   hostDisplayName: string
-  hostImageUrl:  string
+  hostImageUrl?:  string
 }
 
 // the type comment does exist in the js so we can't use that word

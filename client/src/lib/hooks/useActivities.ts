@@ -1,11 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import agent from "../api/agent";
 import { useLocation } from "react-router";
-import type { Activity } from "../types";
+import type { Activity, PagedList } from "../types";
 import { useAccount } from "./useAccount";
+import { useStore } from "./useStore";
 
 export const useActivities = (id?: string) => {
-
+    const {activityStore: {filter, startDate}} = useStore();
     const queryClient = useQueryClient();
     const {currentUser} = useAccount();
     const location = useLocation();
@@ -13,27 +14,47 @@ export const useActivities = (id?: string) => {
     // now when we go to the create activity tab there is nothing to be loaded however the loading is taking place
     // so we want the list to be loaded only if it is in this route
 
-    const {data: activities, isLoading} = useQuery({
-            queryKey: ['activities'],
-            queryFn: async () => {
-            const response = await agent.get<Activity[]>('/activities');
-            return response.data;
+    // now we need to make when either filter or startDate change to change it basically get the data and to do that we need
+    // to observe (since we will use mobx not react query) however we can't do that on the hook but we will add the observer to the component! 
+    const {data: activitiesGroup, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } 
+    = useInfiniteQuery<PagedList<Activity, string>>({
+        // now it uses the same query key for every query and if we want our filters to work we will need to pass them too
+        queryKey: ['activities', filter, startDate],
+        // we made it = null since in the first time we don't need to send the param
+        // the inifinite query will take automatically the care of the changing of the param
+        queryFn: async ({pageParam = null}) => {
+        const response = await agent.get<PagedList<Activity, string>>('/activities', {
+            // these are query string parameters
+            params: {
+                cursor: pageParam,
+                pageSize: 3,
+                filter,
+                startDate
+            }
+        });
+        return response.data;
         },
-        // staleTime: 1000 * 60 * 5 // for 5 min
+        staleTime: 1000 * 60 * 5,
+        placeholderData: keepPreviousData, // so when loading nothing is removed till the new data come
+        initialPageParam: null, // it is required by infinite query
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
         enabled: !id && location.pathname === '/activities' && !!currentUser,
-        select: data => { 
-            return data.map(activity => {
-                const host = activity?.attendees.find(x => x.id === activity.hostId);
-
-                return {
-                    ...activity, 
-                    // we are defining them here rather than editing our apis
-                    isHost: currentUser?.id === activity.hostId,
-                    isGoing: activity.attendees.some(x => x.id === currentUser?.id),
-                    hostImageUrl: host?.imageUrl
-                }
-            })
-        }
+        select: data => ({
+            ...data,
+            pages: data.pages.map((page) => ({
+                ...page,
+                items: page.items.map(activity => {
+                    const host = activity?.attendees.find(x => x.id === activity.hostId);
+                    return {
+                        ...activity, 
+                        // we are defining them here rather than editing our apis
+                        isHost: currentUser?.id === activity.hostId,
+                        isGoing: activity.attendees.some(x => x.id === currentUser?.id),
+                        hostImageUrl: host?.imageUrl
+                    }
+                })
+            }))
+        }) // we included it with () so we can implicitly return what is inside it
     });
     // there is qui
     // te no difference in this stage between isloading and ispending
@@ -106,7 +127,7 @@ export const useActivities = (id?: string) => {
         // and as we are using the id of the main class then we need to pass the id when we use the useActivities
         onMutate: async (activityId: string) => {
             // we gonna cancel any query as we don't anything to override our updates by synching to the api at this stage
-            await queryClient.cancelQueries({queryKey: [activities, activityId]});
+            await queryClient.cancelQueries({queryKey: ['activities', activityId]});
 
             // now to get the activity from the cache
             const prevActivity = queryClient.getQueryData<Activity>(['activities', activityId]);
@@ -145,5 +166,6 @@ export const useActivities = (id?: string) => {
         }
     })
 
-    return {activities, isLoading, updateActivity, createActivity, deleteActivity, activity, isLoadingActivity, updateAttendance}
+    return {activitiesGroup, isLoading, updateActivity, createActivity, deleteActivity, activity, isLoadingActivity, 
+        updateAttendance, isFetchingNextPage, fetchNextPage, hasNextPage}
 }

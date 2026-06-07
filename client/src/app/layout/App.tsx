@@ -69,7 +69,7 @@ function App() {
         {/* we use map to loop over the list */}
         {/* we don't need to do this {activities.map((activity : Activity) => (
             since we did defined its type at the higher scope*/}
-        <Container maxWidth="xl" sx={{mt: 3}}>
+        <Container maxWidth="xl" sx={{pt: 14}}>
         {/* now when we go to a specific route the component outlet will be replaced with that component we are going to */}
           <Outlet/>
       </Container>

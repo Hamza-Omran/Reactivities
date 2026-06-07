@@ -2,6 +2,7 @@ using System;
 using Application.Activities.Commands;
 using Application.Activities.DTOs;
 using Application.Activities.Queries;
+using Application.Core;
 using Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -26,7 +27,8 @@ public class ActivitiesController : BaseApiController
     // [AllowAnonymous] // this is to make this endpoint accessed by anyone when the programs make them all authorized
     [HttpGet]
     // we use action result when we want to return an http respond
-    public async Task<ActionResult<List<ActivityDto>>> GetActivities( // CancellationToken ct
+    // by default our api is going to see the body of the params and get them but we will specify it too [fromquery]
+    public async Task<ActionResult<PagedList<ActivityDto, DateTime?>>> GetActivities([FromQuery]ActivityParams activityParams // CancellationToken ct
         )
     {
         // 503 is too busy and will be sent when the server is too busy 
@@ -38,7 +40,7 @@ public class ActivitiesController : BaseApiController
         // on in the application layer it doesn't know about the ORM we are using and the db logic
 
         // now we gonna need to add mediator as another service in the program.cs file, as we are injecting it in our activities conroller
-        return await Mediator.Send(new GetActivityList.Query()//, ct
+        return HandleResults(await Mediator.Send(new GetActivityList.Query{Params = activityParams})//, ct
         );
     }
 

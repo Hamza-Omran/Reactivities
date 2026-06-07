@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import agent from "../api/agent"
-import type { Photo, Profile, User } from "../types";
-import { useMemo } from "react";
+import type { Activity, Photo, Profile, User } from "../types";
+import { useMemo, useState } from "react";
 import type { EditProfileSchema } from "../schemas/editProfileSchema";
 
 export const useProfile = (id?: string, predicate?: string) => {
     const queryClient = useQueryClient();
-    const {data: profile, isLoading: loadingProfile} = useQuery<Profile>({
+    const [filter, setFilter] = useState<string | null>(null);
+
+    const { data: profile, isLoading: loadingProfile } = useQuery<Profile>({
         queryKey: ['profile', id],
         queryFn: async () => {
             const response = await agent.get<Profile>(`/profiles/${id}`);
@@ -14,8 +16,8 @@ export const useProfile = (id?: string, predicate?: string) => {
         },
         enabled: !!id && !predicate // we do this as in our application we won't need the other queries to be executed if we are calling for the following list only
     })
-    
-    const {data: photos, isLoading: loadingPhotos} = useQuery<Photo[]>({
+
+    const { data: photos, isLoading: loadingPhotos } = useQuery<Photo[]>({
         queryKey: ['photos', id],
         queryFn: async () => {
             const response = await agent.get<Photo[]>(`/profiles/${id}/photos`)
@@ -24,15 +26,28 @@ export const useProfile = (id?: string, predicate?: string) => {
         enabled: !!id && !predicate
     })
 
-    const {data: followings, isLoading: loadingFollowings} = useQuery<Profile[]>({
+    const { data: followings, isLoading: loadingFollowings } = useQuery<Profile[]>({
         queryKey: ['followings', id, predicate],
         queryFn: async () => {
-            const response = 
+            const response =
                 await agent.get<Profile[]>(`/profiles/${id}/follow-list?predicate=${predicate}`)
             return response.data
         },
         enabled: !!id && !!predicate
     })
+
+    const { data: userActivities, isLoading: loadingUserActivities } = useQuery({
+        queryKey: ['user-activities', filter],
+        queryFn: async () => {
+            const response = await agent.get<Activity[]>(`/profiles/${id}/activities`, {
+                params: {
+                    filter
+                }
+            });
+            return response.data
+        },
+        enabled: !!id && !!filter //this way this query won't be called but when we in the component change it to true
+    });
 
     const uploadPhoto = useMutation({
         mutationFn: async (file: Blob) => {
@@ -41,7 +56,7 @@ export const useProfile = (id?: string, predicate?: string) => {
             // it must be called file as in the API!
             formData.append('file', file);
             const response = await agent.post('/profiles/add-photo', formData, {
-                headers: {'Content-Type': 'multipart/form-data'}
+                headers: { 'Content-Type': 'multipart/form-data' }
             })
             return response.data;
         },
@@ -51,7 +66,7 @@ export const useProfile = (id?: string, predicate?: string) => {
             });
 
             queryClient.setQueryData(['user'], (data: User) => {
-                if(!data) return data;
+                if (!data) return data;
                 return {
                     ...data,
                     imageUrl: data.imageUrl ?? photo.url
@@ -59,7 +74,7 @@ export const useProfile = (id?: string, predicate?: string) => {
             })
 
             queryClient.setQueryData(['profile', id], (data: Profile) => {
-                if(!data) return data;
+                if (!data) return data;
                 return {
                     ...data,
                     imageUrl: data.imageUrl ?? photo.url
@@ -75,7 +90,7 @@ export const useProfile = (id?: string, predicate?: string) => {
         onSuccess: (_, photo) => {
             queryClient.setQueryData(['user'], (userData: User) => {
                 // it shouldn't be the case and we do it for typescript purposes
-                if(!userData) return userData;
+                if (!userData) return userData;
                 return {
                     ...userData,
                     imageUrl: photo.url
@@ -83,7 +98,7 @@ export const useProfile = (id?: string, predicate?: string) => {
             });
             queryClient.setQueryData(['profile', id], (profile: Profile) => {
                 // it shouldn't be the case and we do it for typescript purposes
-                if(!profile) return profile;
+                if (!profile) return profile;
                 return {
                     ...profile,
                     imageUrl: photo.url
@@ -132,12 +147,12 @@ export const useProfile = (id?: string, predicate?: string) => {
         },
         onSuccess: () => {
             queryClient.setQueryData(['profile', id], (profile: Profile) => {
-                queryClient.invalidateQueries({queryKey: ['followings', id, 'followers']}) // we hard coded followers since it is the only one that is gong to change when we click
-                if(!profile || profile.followersCount === undefined) return profile;
+                queryClient.invalidateQueries({ queryKey: ['followings', id, 'followers'] }) // we hard coded followers since it is the only one that is gong to change when we click
+                if (!profile || profile.followersCount === undefined) return profile;
                 return {
                     ...profile,
                     following: !profile.following,
-                    followersCount: profile.following ? profile.followersCount-1 : profile.followersCount+1
+                    followersCount: profile.following ? profile.followersCount - 1 : profile.followersCount + 1
                 }
             })
         }
@@ -150,6 +165,6 @@ export const useProfile = (id?: string, predicate?: string) => {
 
     return {
         profile, loadingProfile, photos, loadingPhotos, isCurrentUser, uploadPhoto, setMainPhoto, deletePhoto, updateProfile,
-        updateFollowing, followings, loadingFollowings
+        updateFollowing, followings, loadingFollowings, userActivities, loadingUserActivities, filter, setFilter
     }
 }

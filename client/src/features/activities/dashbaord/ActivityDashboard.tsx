@@ -19,7 +19,6 @@ import ActivityFilters from './ActivityFilters';
   
   
 export default function ActivityDashboard() {
-  
   return (
     <>
         <Grid container spacing={3}>
@@ -27,7 +26,7 @@ export default function ActivityDashboard() {
           <Grid size={8}>
             <ActivityList/>
           </Grid>
-          <Grid size={4} style={{display: "flex", flexDirection: "column", gap: 20}}>
+          <Grid size={4} style={{display: "flex", flexDirection: "column", gap: 20, position: 'sticky', top: 112, alignSelf: 'flex-start'}}>
             {/* here the activities if it does exist then the component will render, so that is why we used &&
             {selectedActivity && !editMode 
             && <ActivityDetail selectedActivity={selectedActivity} cancelSelectActivity={cancelSelectActivity} openForm={openForm}/>}
