@@ -13,5 +13,5 @@ public class RegisterDto
     public string Email { get; set; } = "";
 
     // for this the identity entity framework will force the validation for required and the strong password
-    public string Password { get; set; }
+    public string Password { get; set; } = null!;
 }

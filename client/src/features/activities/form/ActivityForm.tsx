@@ -1,9 +1,13 @@
 import { Box, Button, Paper, Typography } from "@mui/material";
 import { useActivities } from "../../../lib/hooks/useActivities";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
-import { activitySchema, type ActivitySchema } from "../../../lib/schemas/activitySchema";
+import {
+  activitySchema,
+  type ActivityFormValues,
+  type ActivitySchema,
+} from "../../../lib/schemas/activitySchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextInput from "../../../app/shared/components/TextInput";
 import SelectInput from "../../../app/shared/components/SelectInput";
@@ -19,9 +23,9 @@ import LocationInput from "../../../app/shared/components/LocationInput";
 export default function ActivityForm() {
   
   //  onSubmit is the default mode
-  const {reset, control, handleSubmit} = useForm<ActivitySchema>({
-    mode: 'onTouched',
-    resolver: zodResolver(activitySchema) as any
+  const {reset, control, handleSubmit} = useForm< ActivityFormValues, unknown, ActivitySchema>({
+    mode: 'onBlur',
+    resolver: zodResolver(activitySchema)
   });
 
   const navigate = useNavigate();
@@ -86,7 +90,8 @@ export default function ActivityForm() {
         <LocationInput control={control} label="Enter the location" name="location"/>
         
         <Box style={{display: "flex", justifyContent: "end", gap: 10}}>
-          <Button component={Link} to={`/activities/${activity?.id}`} color="inherit">Cancel</Button>
+          {/* navigate -1 is to go to the previous page */}
+          <Button onClick={() => navigate(-1)} color="inherit">Cancel</Button>
           <Button 
           type="submit" color="success" variant="contained"
           loading={updateActivity.isPending || createActivity.isPending}

@@ -27,7 +27,7 @@ builder.Services.AddControllers(opt =>
 });
 builder.Services.AddDbContext<AppDbContext>(opt =>
 {
-    opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 // now we gonna add the websites that can actually access our APIs
@@ -75,15 +75,19 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod()
     .AllowCredentials() // so it accepts cookies from our browser which is a different origin from the API
-    .WithOrigins("http://localhost:3000", "https://localhost:3000")); // note adding the slash here will make it still saying cors problem
+    .WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5001", "https://localhost:5001")); // Added Kestrel ports for static file serving
 
 // the authentication must be before the authorization else u will get 401 that u are unauthorized
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseDefaultFiles(); // it will search for and serve index.html in the wwwroot folder
+app.UseStaticFiles(); // it will serve the js and css files
+
 app.MapControllers();
 app.MapGroup("api").MapIdentityApi<User>(); // so the login will be /api/login
 app.MapHub<CommentHub>("/comments");
+app.MapFallbackToController("Index", "Fallback"); // we don't need to add use controller since it has the controller convention in its name
 
 // we can't use the services we initialized here so we gonna use something called service locator pattern
 // and we gonna use the using keyword so anything we are going to create in this scope is going to be disposed by the framework (cleaned)
@@ -93,8 +97,8 @@ var services = scope.ServiceProvider;
 
 try
 {
-    var context = services.GetService<AppDbContext>();
-    var userManager = services.GetService<UserManager<User>>();
+    var userManager = services.GetRequiredService<UserManager<User>>();
+    var context = services.GetRequiredService<AppDbContext>();
     //Asynchronously applies any pending migrations for the context to the database. 
     // Will create the database if it does not already exist.
     // so it gonna create the db for us once the app.Run() starts
@@ -105,8 +109,8 @@ try
 }
 catch (Exception ex)
 {
-    var logger = services.GetService<ILogger<Program>>();
-    logger.LogError("an error occurred during migration.");
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    logger.LogError($"an error occurred during migration, {ex}");
 }
 
 app.Run();

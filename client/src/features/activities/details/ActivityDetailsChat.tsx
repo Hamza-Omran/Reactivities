@@ -42,7 +42,7 @@ const ActivityDetailsChat = observer(function ActivityDetailsChat() {
   const handleKeyPress = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      handleSubmit(addComment)(); // without that second parenthsis it won't execute as the first is for parameter
+      handleSubmit(addComment)(); // without that second parenthesis it won't execute as the first is for parameter
     }
   };
 

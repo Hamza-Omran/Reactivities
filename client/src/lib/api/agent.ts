@@ -43,13 +43,12 @@ agent.interceptors.response.use(
     // } finally {
     //     store.uiStore.isIdle();
     // }
-
-        await sleep(1000);
+        if(import.meta.env.DEV) await sleep(1000);
         store.uiStore.isIdle();
         return response;
     },
     async error => {
-        await sleep(1000);
+        if(import.meta.env.DEV) await sleep(1000);
         store.uiStore.isIdle();
 
         // in the network tab in the client dev tools the preview tab shows the data

@@ -43,7 +43,7 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(op
             x.HasOne(o => o.Target)
                 .WithMany(x=>x.Followers)
                 .HasForeignKey(x=>x.TargetId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction); // we did no action because of hte sql server migration
         });
 
         // now this function shows different time since it is supposed to get utc time but our sqlite doesn't support that

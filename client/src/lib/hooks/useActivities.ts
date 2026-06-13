@@ -4,6 +4,7 @@ import { useLocation } from "react-router";
 import type { Activity, PagedList } from "../types";
 import { useAccount } from "./useAccount";
 import { useStore } from "./useStore";
+import type { FieldValues } from "react-hook-form";
 
 export const useActivities = (id?: string) => {
     const {activityStore: {filter, startDate}} = useStore();
@@ -34,7 +35,7 @@ export const useActivities = (id?: string) => {
         });
         return response.data;
         },
-        staleTime: 1000 * 60 * 5,
+        // staleTime: 1000 * 60 * 5,
         placeholderData: keepPreviousData, // so when loading nothing is removed till the new data come
         initialPageParam: null, // it is required by infinite query
         getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -84,18 +85,18 @@ export const useActivities = (id?: string) => {
 
     const updateActivity = useMutation({
         mutationFn: async(activity: Activity) => {
-            await agent.put('/activities', activity)
+            await agent.put(`/activities/${activity.id}`, activity)
         },
         onSuccess: async ()=>{
             await queryClient.invalidateQueries({ // the invalidate so after update we go and
             // fetch the data from the server with the new updates
-                queryKey: ['activities']
+                queryKey: ['activities', activity?.id]
             })
         }
     })
 
     const createActivity = useMutation({
-        mutationFn: async(activity: Activity) => {
+        mutationFn: async(activity: FieldValues) => {
             const response = await agent.post('/activities', activity);
             return response.data;
         },

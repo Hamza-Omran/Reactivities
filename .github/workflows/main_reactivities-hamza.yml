@@ -18,6 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up node.js # to be able to use npm commands
+        uses: actions/setup-node@v4 # this actions has been provided in the market workplace for github actions
+        with:
+          node-version: '22'
+
+      - name: Install deps and build react app
+        run: | # we used the | so we can add multiple lines inside run
+          cd client
+          npm install
+          npm run build
+
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:

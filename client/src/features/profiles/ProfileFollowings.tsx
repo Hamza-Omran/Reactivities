@@ -26,7 +26,7 @@ export default function ProfileFollowings({ activeTab }: Props) {
 
       {loadingFollowings ? (
         <Typography>Loading...</Typography>
-      ) : followings.length === 0 
+      ) : followings?.length === 0 
         ? <Typography> {activeTab === 3 ? 'There are no followers' : 'There are no followings'}</Typography>
         : (
         <Box sx={{display:"flex", mt: 3, gap: 3}}>
