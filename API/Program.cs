@@ -67,7 +67,7 @@ builder.Services.AddTransient<ExceptionMiddleware>(); // transient means this se
 builder.Services.AddIdentityApiEndpoints<User>(opt =>
 {
     opt.User.RequireUniqueEmail = true;
-    opt.SignIn.RequireConfirmedEmail = true;
+    // opt.SignIn.RequireConfirmedEmail = true; as resend will work for ur registered email as long as u don't have a customized email
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();
