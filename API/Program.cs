@@ -14,6 +14,8 @@ using Persistence;
 using Infrastructure.Photos;
 using Application.Interfaces;
 using API.SignalR;
+using Resend;
+using Infrastructure.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +29,13 @@ builder.Services.AddControllers(opt =>
 });
 builder.Services.AddDbContext<AppDbContext>(opt =>
 {
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null);
+    });
 });
 
 // now we gonna add the websites that can actually access our APIs
@@ -41,6 +49,14 @@ builder.Services.AddMediatR(x => {
     x.AddOpenBehavior(typeof(ValidationBehaviour<,>));
 }); // as we choose this (RegisterServicesFromAssemblyContaining) here we can add one handler and the others will be automatically registered
 
+builder.Services.AddHttpClient<ResendClient>(); // we don't need to configure that but inorder to send that we need to send that email by http to resend
+builder.Services.Configure<ResendClientOptions>(opt =>
+{
+    opt.ApiToken = builder.Configuration["Resend:ApiToken"]!; // we will add the ! since we already know that it is there
+});
+builder.Services.AddTransient<IResend, ResendClient>();
+builder.Services.AddTransient<IEmailSender<User>, EmailSender>();
+
 // this is scoped to the http request itself
 builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 builder.Services.AddScoped<IPhotoService, PhotoService>();
@@ -51,6 +67,7 @@ builder.Services.AddTransient<ExceptionMiddleware>(); // transient means this se
 builder.Services.AddIdentityApiEndpoints<User>(opt =>
 {
     opt.User.RequireUniqueEmail = true;
+    opt.SignIn.RequireConfirmedEmail = true;
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();

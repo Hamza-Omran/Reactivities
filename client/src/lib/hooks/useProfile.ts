@@ -143,7 +143,7 @@ export const useProfile = (id?: string, predicate?: string) => {
 
     const updateFollowing = useMutation({
         mutationFn: async () => {
-            await agent.post(`/profiles/${id}/follow`)
+            await agent.post(`/profile/${id}/follow`)
         },
         onSuccess: () => {
             queryClient.setQueryData(['profile', id], (profile: Profile) => {
