@@ -1,14 +1,17 @@
 using System;
+using System.Text;
 using API.DTOs;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
 // now we gonna need the userManager too, however the signInManager gives us access to it so we will import one rather than importing two
-public class AccountController(SignInManager<User> signInManager) : BaseApiController
+public class AccountController(SignInManager<User> signInManager, IEmailSender<User> emailSender, IConfiguration config) : BaseApiController
 {
     [AllowAnonymous]
     [HttpPost("register")]
@@ -23,7 +26,12 @@ public class AccountController(SignInManager<User> signInManager) : BaseApiContr
         
         var result = await signInManager.UserManager.CreateAsync(user, registerDto.Password);
         
-        if(result.Succeeded) return Ok();
+        if(result.Succeeded)
+        {
+               await SendConfirmationLinkAsync(user, registerDto.Email);
+
+               return Ok();
+        }
 
         foreach( var error in result.Errors)
         {
@@ -33,22 +41,49 @@ public class AccountController(SignInManager<User> signInManager) : BaseApiContr
         return ValidationProblem();
     }
 
-//     The [AllowAnonymous] allows it because you need to check authentication from the client-side when the app 
-// loads/refreshes.
+    [AllowAnonymous]
+    [HttpGet("resendConfirmationEmail")]
+    public async Task<ActionResult> ResendConfirmEmail(string? email, string? userId)
+    {
+        if(string.IsNullOrEmpty(email) && string.IsNullOrEmpty(userId))
+        {
+            return BadRequest("Email or UserId must be provided");
+        }
+        var user = await signInManager.UserManager.Users.FirstOrDefaultAsync(x => x.Email == email || x.Id == userId);
 
-// Here's why:
+        if(user == null || string.IsNullOrEmpty(user.Email)) return BadRequest("User not found");
 
-// JavaScript can't read cookies → When React loads, it doesn't know if you're logged in
-// Need a public endpoint → So React can ask: "Am I logged in?"
-// It's safe anyway → The endpoint has built-in protection:
+        await SendConfirmationLinkAsync(user, user.Email);
 
-// if(User.Identity?.IsAuthenticated == false) return NoContent();  // No data sent if not logged in
-// What happens:
+        return Ok();
+    }
 
-// Unauthenticated user calls it → Returns 204 NoContent (empty response)
-// Authenticated user calls it → Returns user info (DisplayName, Email, etc.)
-// So even though it's public, only authenticated users get actual data. It's a safe pattern used in most web apps
-//  But the browser AUTOMATICALLY SENDS it with API requests and that is out the httpOnly means so no js can ever access it even if malicious
+    private async Task SendConfirmationLinkAsync(User user, string email)
+    {
+        var code = await signInManager.UserManager.GenerateEmailConfirmationTokenAsync(user); // however the code might contain special characters
+        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+        var confirmedEmailUrl = $"{config["ClientAppUrl"]}/confirm-email?userId={user.Id}&code={code}";
+
+        await emailSender.SendConfirmationLinkAsync(user, email, confirmedEmailUrl);
+    }
+
+    //     The [AllowAnonymous] allows it because you need to check authentication from the client-side when the app 
+    // loads/refreshes.
+
+    // Here's why:
+
+    // JavaScript can't read cookies → When React loads, it doesn't know if you're logged in
+    // Need a public endpoint → So React can ask: "Am I logged in?"
+    // It's safe anyway → The endpoint has built-in protection:
+
+    // if(User.Identity?.IsAuthenticated == false) return NoContent();  // No data sent if not logged in
+    // What happens:
+
+    // Unauthenticated user calls it → Returns 204 NoContent (empty response)
+    // Authenticated user calls it → Returns user info (DisplayName, Email, etc.)
+    // So even though it's public, only authenticated users get actual data. It's a safe pattern used in most web apps
+    //  But the browser AUTOMATICALLY SENDS it with API requests and that is out the httpOnly means so no js can ever access it even if malicious
 
     [AllowAnonymous] // the reason for doing this is that we are going to call it from our client when the user first come to our
     //  application or refreshes the page. because at that point if they are logged in then all what we have is access to the 

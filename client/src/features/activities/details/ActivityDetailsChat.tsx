@@ -98,7 +98,7 @@ const ActivityDetailsChat = observer(function ActivityDetailsChat() {
                   <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
                     <Typography
                       component={Link}
-                      to={`/profiles/${comment.userId}`}
+                      to={`/profile/${comment.userId}`}
                       variant="subtitle1"
                       sx={{ fontWeight: "bold", textDecoration: "none" }}
                     >
