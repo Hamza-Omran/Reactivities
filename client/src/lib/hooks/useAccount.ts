@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { LoginSchema } from "../schemas/loginSchema"
 import agent from "../api/agent"
-import type { User } from "../types";
+import type { ResetPassword, User } from "../types";
 import { useNavigate } from "react-router";
 import { type RegisterSchema } from "../schemas/registerSchema";
 import { toast } from "react-toastify";
+import type { ChangePasswordSchema } from "../schemas/changePasswordSchema";
 
 export const useAccount = () => {
 
@@ -27,6 +28,20 @@ export const useAccount = () => {
             })
         }
     });
+
+    // queryKey: ['user'] — This is the cache identifier. React Query uses this to store/retrieve the data in its cache
+    // queryFn — The async function that runs to fetch the data. It calls your API's /account/user-info endpoint
+    // return response.data — Extracts just the data from the API response (not the whole response object)
+    // {data: currentUser} — Destructures the result, so currentUser contains the user data
+
+    const {data: currentUser, isLoading: loadingUserInfo} = useQuery({
+        queryKey: ['user'],
+        queryFn: async () => {
+            const response = await agent.get<User>('/account/user-info');
+            return response.data;
+        },
+        enabled: !queryClient.getQueryData(['user'])
+    })
 
     const registerUser = useMutation({
         mutationFn: async (creds: RegisterSchema)=>{
@@ -65,18 +80,22 @@ export const useAccount = () => {
         }
     })
 
-    // queryKey: ['user'] — This is the cache identifier. React Query uses this to store/retrieve the data in its cache
-    // queryFn — The async function that runs to fetch the data. It calls your API's /account/user-info endpoint
-    // return response.data — Extracts just the data from the API response (not the whole response object)
-    // {data: currentUser} — Destructures the result, so currentUser contains the user data
+    const changePassword = useMutation({
+        mutationFn: async (data: ChangePasswordSchema) => {
+            await agent.post('/account/change-password', data);
+        }
+    })
 
-    const {data: currentUser, isLoading: loadingUserInfo} = useQuery({
-        queryKey: ['user'],
-        queryFn: async () => {
-            const response = await agent.get<User>('/account/user-info');
-            return response.data;
-        },
-        enabled: !queryClient.getQueryData(['user'])
+    const forgotPassword = useMutation({
+        mutationFn: async (email: string) => {
+            await agent.post('/forgotPassword', {email});
+        }
+    })
+    
+    const resetPassword = useMutation({
+        mutationFn: async (data: ResetPassword) => {
+            await agent.post('/resetPassword', data);
+        }
     })
 
     return {
@@ -86,6 +105,9 @@ export const useAccount = () => {
         loadingUserInfo,
         registerUser,
         verifyEmail,
-        resendConfirmationEmail
+        resendConfirmationEmail,
+        changePassword,
+        forgotPassword,
+        resetPassword
     }
 }

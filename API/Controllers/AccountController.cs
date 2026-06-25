@@ -116,4 +116,19 @@ public class AccountController(SignInManager<User> signInManager, IEmailSender<U
         return NoContent();
     }
 
+    [HttpPost("change-password")]
+    public async Task<ActionResult> ChangePassword(ChangePasswordDto passwordDto)
+    {
+        // we can use the User as it is a claims principle as we are in the account controller, as long as they sign in
+        var user = await signInManager.UserManager.GetUserAsync(User); 
+
+        if(user == null) return Unauthorized();
+
+        var result = await signInManager.UserManager.ChangePasswordAsync(user, passwordDto.CurrentPassword, passwordDto.NewPassword);
+
+        if(result.Succeeded) return Ok();
+
+        // as if they entered a weak password they will get a validation error and so on till they are good
+        return BadRequest(result.Errors.First().Description); // we will depend on the toast in the react app
+    }
 }
