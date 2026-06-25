@@ -2,7 +2,7 @@ import {useId, useState, type MouseEvent} from 'react';
 import { useAccount } from '../../lib/hooks/useAccount';
 import { Avatar, Box, Divider, ListItemIcon, ListItemText, Menu, MenuItem, Button  } from '@mui/material';
 import { Link } from 'react-router';
-import { Add, Logout, Person } from '@mui/icons-material';
+import { Add, Logout, Password, Person } from '@mui/icons-material';
 
 export default function UserMenu() {
   const {currentUser, logoutUser} = useAccount();
@@ -53,6 +53,12 @@ export default function UserMenu() {
                     <Person/>
                 </ListItemIcon>
                 <ListItemText>My Profile</ListItemText>
+            </MenuItem>
+            <MenuItem component={Link} to='/change-password' onClick={handleClose}>
+                <ListItemIcon>
+                    <Password/>
+                </ListItemIcon>
+                <ListItemText>Change password</ListItemText>
             </MenuItem>
             <Divider/>
             <MenuItem onClick={()=>{

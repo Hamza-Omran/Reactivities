@@ -80,12 +80,17 @@ export default function LoginForm() {
                 <Button loading={resendConfirmationEmail.isPending} onClick={handleResendEmail}> Re-send Email Link</Button>
             </Box>
         ) : (
-            <Typography sx={{textAlign: 'center'}}>
-                Don't have an account?
-                <Typography sx={{ml: 1}} component={Link} to='/register'  color="primary">
-                    Sign Up
+            <Box sx={{display:'flex', alignItems:'center', justifyContent:'center', gap:3}}>
+                <Typography sx={{textAlign: 'center'}}>
+                    Forgot password? Click <Link to='/forgot-password'>here</Link>
                 </Typography>
-            </Typography>
+                <Typography sx={{textAlign: 'center'}}>
+                    Don't have an account?
+                    <Typography sx={{ml: 1}} component={Link} to='/register'  color="primary">
+                        Sign Up
+                    </Typography>
+                </Typography>
+            </Box>
         )}
     </Paper>
   )

@@ -1,6 +1,7 @@
 using System;
 using Domain;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Resend;
 
@@ -9,7 +10,7 @@ namespace Infrastructure.Email;
 // we get this interface from asp net identity
 //  we will need access to our resend so we injected it
 //  now we do have the scopeFactory so the error of cannot resolve because it requries a scoped factory is solved so the transient in program.cs can work
-public class EmailSender(IServiceScopeFactory scopeFactory) : IEmailSender<User>
+public class EmailSender(IServiceScopeFactory scopeFactory, IConfiguration config) : IEmailSender<User>
 {
     //  for the confirmation link it will be created in the signup and for the default message we will override it here
     public async Task SendConfirmationLinkAsync(User user, string email, string confirmationLink)
@@ -28,11 +29,24 @@ public class EmailSender(IServiceScopeFactory scopeFactory) : IEmailSender<User>
     }
 
 
-    public Task SendPasswordResetCodeAsync(User user, string email, string resetCode)
+    // the user we won't pass it in the account controller as it is part of the asp identity
+    public async Task SendPasswordResetCodeAsync(User user, string email, string resetCode)
     {
-        throw new NotImplementedException();
+        var subject = "Reset Your Password";
+        //  to write html
+        var body = $@"
+            <p>Hi {user.DisplayName}</p>
+            <p>Please click this link to reset your password</p>
+            <p><a href='{config["ClientAppUrl"]}/reset-password?email={email}&code={resetCode}'>
+                Click to reset your password
+            </a></p>
+            <p>If you didn't request this, you can ignore this email</p>
+        ";
+
+        await SendEmailAsync(email, subject, body);
     }
 
+    // this will need us to make a customized one since we can't change the link to our client app so we will use the above function reset code async
     public Task SendPasswordResetLinkAsync(User user, string email, string resetLink)
     {
         throw new NotImplementedException();

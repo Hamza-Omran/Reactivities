@@ -13,6 +13,9 @@ import RequireAuth from "./RequireAuth";
 import RegisterForm from "../../features/account/RegisterForm";
 import ProfilePage from "../../features/profiles/ProfilePage";
 import VerifyEmail from "../../features/account/VerifyEmail";
+import ChangePasswordForm from "../../features/account/ChangePasswordForm";
+import ForgotPasswordForm from "../../features/account/ForgotPasswordForm";
+import ResetPasswordForm from "../../features/account/ResetPasswordForm";
 
 export const router = createBrowserRouter([
     {
@@ -26,7 +29,8 @@ export const router = createBrowserRouter([
                 // different and each with id then it will dispose the old one and mount the new form
                 {path: "createActivity", element: <ActivityForm key={"create"}/>},
                 {path: "manage/:id", element: <ActivityForm/>},
-                {path: "profile/:id", element: <ProfilePage/>}
+                {path: "profile/:id", element: <ProfilePage/>},
+                {path: "change-password", element: <ChangePasswordForm/>}
             ]},
             {path: "", element: <HomePage/>},
             {path: "counter", element: <Counter/>},
@@ -36,6 +40,8 @@ export const router = createBrowserRouter([
             {path: "login", element: <LoginForm/>},
             {path: "register", element: <RegisterForm/>},
             {path: "confirm-email", element: <VerifyEmail/>},
+            {path: "forgot-password", element: <ForgotPasswordForm/>},
+            {path: "reset-password", element: <ResetPasswordForm/>},
             // using the star is called wildcard route so it directs any not matching routes to here
             {path: "*", element: <Navigate replace to='/not-found'/>} // and here it will direct us to not found component as well
         ]
