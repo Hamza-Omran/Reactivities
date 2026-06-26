@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http.Headers;
 using System.Text;
 using API.DTOs;
 using Domain;
@@ -7,12 +8,104 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using static API.DTOs.GitHubInfo;
 
 namespace API.Controllers;
 
 // now we gonna need the userManager too, however the signInManager gives us access to it so we will import one rather than importing two
 public class AccountController(SignInManager<User> signInManager, IEmailSender<User> emailSender, IConfiguration config) : BaseApiController
 {
+
+    [AllowAnonymous]
+    [HttpPost("github-login")]
+    public async Task<ActionResult> LoginWithGithub(string code)
+    {
+        if(string.IsNullOrEmpty(code)) return BadRequest("Missing authorization code");
+
+        // as we are going to create a new instance of the http client we will use using keyword
+        using var httpClient = new HttpClient();
+        // this is to get the response from github in json rather than xml format
+        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        // step 1 - exchange code for access token
+        var tokenResponse = await httpClient.PostAsJsonAsync(
+            "https://github.com/login/oauth/access_token",
+            new GitHubAuthRequest
+            {
+                Code=code,
+                ClientId=config["Authentication:GitHub:ClientId"]!,
+                ClientSecret=config["Authentication:GitHub:ClientSecret"]!,
+                RedicrectUri=$"{config["ClientAppUrl"]}/auth-callback"
+            }
+        );
+
+        if(!tokenResponse.IsSuccessStatusCode)
+            return BadRequest("Failed to get access token");
+
+        var tokenContent = await tokenResponse.Content.ReadFromJsonAsync<GitHubTokenResponse>();
+
+        if(string.IsNullOrEmpty(tokenContent?.AccessToken))
+            return BadRequest("Failed to retrieve access token");
+        
+        // step 2 - fetch user info from github
+        httpClient.DefaultRequestHeaders.Authorization = 
+            new AuthenticationHeaderValue("Bearer", tokenContent.AccessToken);
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Reactivities"); // it doesn't need to match the app specifically and we made it this way rather than reactivitiesdev
+
+        var userResponse = await httpClient.GetAsync("https://api.github.com/user");
+
+        if(!userResponse.IsSuccessStatusCode)
+            return BadRequest("Failed to fetch user info from GitHub");
+        
+        var user = await userResponse.Content.ReadFromJsonAsync<GitHubUser>();
+
+        if(user == null) return BadRequest("Failed to read user from Github");
+
+        // step 3 - getting the email if needed => since if the user has a public email address then we won't need this query
+        if (string.IsNullOrEmpty(user?.Email))
+        {
+            var emailResponse = await httpClient.GetAsync("https://api.github.com/user/emails");
+
+            if (emailResponse.IsSuccessStatusCode)
+            {
+                var emails = await emailResponse.Content.ReadFromJsonAsync<List<GitHubEmail>>();
+
+                // this called the pattern check
+                var primary = emails?.FirstOrDefault(e => e is {Primary: true, Verified: true})?.Email;
+
+                if (string.IsNullOrEmpty(primary))
+                {
+                    return BadRequest("Failed to get email from GitHub");
+                }
+
+                user!.Email = primary;
+            }
+        }
+
+        // step 4 - find for create user and sign in
+        var existingUser = await signInManager.UserManager.FindByEmailAsync(user!.Email);
+
+        if(existingUser == null)
+        {
+            existingUser = new User
+            {
+                Email = user.Email,
+                UserName = user.Email,
+                DisplayName = user.Name,
+                ImageUrl = user.ImageUrl
+            };
+
+            var createdResult = await signInManager.UserManager.CreateAsync(existingUser); // now there is a version of create async that doesn't ask for a password
+
+            if(!createdResult.Succeeded)
+                return BadRequest("Failed to create user");
+        }
+
+        await signInManager.SignInAsync(existingUser, false); //  the false is for the is persistent
+
+        return Ok(); // this is for testing only
+    }
+
     [AllowAnonymous]
     [HttpPost("register")]
     public async Task<ActionResult> RegisterUser(RegisterDto registerDto)
