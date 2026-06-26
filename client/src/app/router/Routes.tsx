@@ -16,6 +16,7 @@ import VerifyEmail from "../../features/account/VerifyEmail";
 import ChangePasswordForm from "../../features/account/ChangePasswordForm";
 import ForgotPasswordForm from "../../features/account/ForgotPasswordForm";
 import ResetPasswordForm from "../../features/account/ResetPasswordForm";
+import AuthCallback from "../../features/account/AuthCallback";
 
 export const router = createBrowserRouter([
     {
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
             {path: "confirm-email", element: <VerifyEmail/>},
             {path: "forgot-password", element: <ForgotPasswordForm/>},
             {path: "reset-password", element: <ResetPasswordForm/>},
+            {path: "auth-callback", element: <AuthCallback/>},
             // using the star is called wildcard route so it directs any not matching routes to here
             {path: "*", element: <Navigate replace to='/not-found'/>} // and here it will direct us to not found component as well
         ]
