@@ -21,7 +21,6 @@
 
     <ItemGroup>
       <PackageReference Include="CloudinaryDotNet" Version="1.29.1" />
-      <PackageReference Include="Resend" Version="0.5.1" />
     </ItemGroup>
 
 </Project>
