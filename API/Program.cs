@@ -14,7 +14,6 @@ using Persistence;
 using Infrastructure.Photos;
 using Application.Interfaces;
 using API.SignalR;
-using Resend;
 using Infrastructure.Email;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,12 +48,11 @@ builder.Services.AddMediatR(x => {
     x.AddOpenBehavior(typeof(ValidationBehaviour<,>));
 }); // as we choose this (RegisterServicesFromAssemblyContaining) here we can add one handler and the others will be automatically registered
 
-builder.Services.AddHttpClient<ResendClient>(); // we don't need to configure that but inorder to send that we need to send that email by http to resend
-builder.Services.Configure<ResendClientOptions>(opt =>
+builder.Services.AddHttpClient("Brevo", client =>
 {
-    opt.ApiToken = builder.Configuration["Resend:ApiToken"]!; // we will add the ! since we already know that it is there
-});
-builder.Services.AddTransient<IResend, ResendClient>();
+    client.BaseAddress = new Uri("https://api.brevo.com/v3/");
+    client.DefaultRequestHeaders.Add("api-key", builder.Configuration["Brevo:ApiToken"]!);
+}); // Brevo does not have a current official C# email SDK, so we call its REST API
 builder.Services.AddTransient<IEmailSender<User>, EmailSender>();
 
 // this is scoped to the http request itself

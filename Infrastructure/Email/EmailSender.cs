@@ -1,16 +1,15 @@
 using System;
+using System.Net;
+using System.Net.Http.Json;
 using Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Resend;
 
 namespace Infrastructure.Email;
 
 // we get this interface from asp net identity
-//  we will need access to our resend so we injected it
-//  now we do have the scopeFactory so the error of cannot resolve because it requries a scoped factory is solved so the transient in program.cs can work
-public class EmailSender(IServiceScopeFactory scopeFactory, IConfiguration config) : IEmailSender<User>
+//  we use Brevo's REST API directly because Brevo no longer provides a current official C# email SDK
+public class EmailSender(IHttpClientFactory httpClientFactory, IConfiguration config) : IEmailSender<User>
 {
     //  for the confirmation link it will be created in the signup and for the default message we will override it here
     public async Task SendConfirmationLinkAsync(User user, string email, string confirmationLink)
@@ -33,11 +32,14 @@ public class EmailSender(IServiceScopeFactory scopeFactory, IConfiguration confi
     public async Task SendPasswordResetCodeAsync(User user, string email, string resetCode)
     {
         var subject = "Reset Your Password";
+        var encodedEmail = WebUtility.UrlEncode(email);
+        var encodedCode = WebUtility.UrlEncode(resetCode);
+
         //  to write html
         var body = $@"
             <p>Hi {user.DisplayName}</p>
             <p>Please click this link to reset your password</p>
-            <p><a href='{config["ClientAppUrl"]}/reset-password?email={email}&code={resetCode}'>
+            <p><a href='{config["ClientAppUrl"]}/reset-password?email={encodedEmail}&code={encodedCode}'>
                 Click to reset your password
             </a></p>
             <p>If you didn't request this, you can ignore this email</p>
@@ -54,23 +56,36 @@ public class EmailSender(IServiceScopeFactory scopeFactory, IConfiguration confi
 
     private async Task SendEmailAsync(string email, string subject, string body)
     {
-        using var scope  = scopeFactory.CreateScope();
-        var resend = scope.ServiceProvider.GetRequiredService<IResend>();
+        var senderEmail = config["Brevo:SenderEmail"] 
+            ?? throw new InvalidOperationException("Brevo sender email is not configured");
+        var senderName = config["Brevo:SenderName"] ?? "Renty";
+        var brevo = httpClientFactory.CreateClient("Brevo");
 
-        var message = new EmailMessage
+        var message = new
         {
-            // now as we don't have a custom email we will need to use resend domain
-            From = "whatever@resend.dev",
-            Subject = subject,
-            HtmlBody = body,
+            sender = new
+            {
+                name = senderName,
+                email = senderEmail
+            },
+            to = new[]
+            {
+                new
+                {
+                    email
+                }
+            },
+            subject,
+            htmlContent = body
         };
 
-        message.To.Add(email);
+        // keep the link visible in the API console while testing email confirmation locally
+        Console.WriteLine(body);
 
-        // because of the restrictions on where resend will send the email we will fish it out from our console logs
-        // until we are actually ready to use a proper email address
-        Console.WriteLine(message.HtmlBody);
-        await resend.EmailSendAsync(message);
-        // await Task.CompletedTask; // we will use this instead of the send message since we can see the log and use the link in postman rather than it going to be sent
+        var response = await brevo.PostAsJsonAsync("smtp/email", message);
+        if (response.IsSuccessStatusCode) return;
+
+        var error = await response.Content.ReadAsStringAsync();
+        throw new InvalidOperationException($"Brevo email send failed: {(int)response.StatusCode} {response.ReasonPhrase}. {error}");
     }
 }
