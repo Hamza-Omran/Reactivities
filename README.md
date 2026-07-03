@@ -1,3 +1,8 @@
+<img width="1912" height="909" alt="image" src="https://github.com/user-attachments/assets/61c22b8a-dac3-4b36-89de-6d383fc8cbde" />
+
+
+---
+
 # Reactivities
 
 A full-stack social activities platform built with .NET 10 and React 19. Users can create, browse, and join activities, follow other users, upload photos, and participate in real-time chat threads attached to each activity.
